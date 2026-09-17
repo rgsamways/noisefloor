@@ -283,7 +283,7 @@ Server rules that must hold:
 
 ## 11. What this changes in the v1 outline
 
-1. **Phase 0:** add the World consistency validator (§3), at least the RF budget, SNR→rate, rate→capacity, shaper→throughput, and event-coherence families. Curated cases must pass it.
+1. **Before Phase 1, as its own change:** add the World consistency validator (§3), at least the RF budget, SNR→rate, rate→capacity, shaper→throughput, and event-coherence families. Curated cases must pass it. (Originally written as "Phase 0" — wrong: Phase 0's workspace/schema/auth scaffold was already built and deployed by the time this was caught. The validator lands as its own `openspec` change, `world-validator`, after Phase 0 archives and before any Phase 1 dashboard work starts, per `PROJECT-PLAN.md`'s decision log.)
 2. **Phase 1:** dashboards accept an `editable` mode with `onChange` — cheap to add now, expensive to retrofit.
 3. **Phase 2:** attempts record `case_version` from day one.
 4. **§13 "Later":** authoring UI moves from "later" to a named Phase 6 below; orgs/teams move with it.
