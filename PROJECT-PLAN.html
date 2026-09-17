@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>noisefloor.ca — Project Plan</title>
+<style>
+  @page { size: Letter; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.55;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-size: 15px;
+  }
+  h1, h2, h3, h4 { line-height: 1.25; color: #111; font-weight: 650; }
+  h1 { font-size: 1.9rem; border-bottom: 3px solid #2b6cb0; padding-bottom: 0.4rem; margin-top: 0; }
+  h2 { font-size: 1.35rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; margin-top: 2.2rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.6rem; color: #2b6cb0; }
+  blockquote {
+    border-left: 4px solid #2b6cb0;
+    margin: 1rem 0;
+    padding: 0.4rem 1rem;
+    color: #444;
+    background: #f4f8fb;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: #f2f2f2;
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+  pre {
+    background: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.86rem;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 0.45rem 0.65rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #eef4fa; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  hr { border: none; border-top: 1px solid #d0d7de; margin: 2rem 0; }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: 0.2rem 0; }
+  a { color: #2b6cb0; }
+  em { color: #555; }
+  strong { color: #111; }
+</style>
+</head>
+<body>
+<h1>noisefloor.ca — Project Plan</h1>
+<blockquote>
+<p>Delivery plan, decision log, and risk register for the build described in <code>NOISEFLOOR-OUTLINE.md</code>. That document is the product/technical spec; this one is the &quot;how we&#39;re actually going to build it, in what order, and what could go wrong&quot; layer. Read the outline first — this assumes it.</p>
+</blockquote>
+<p>Plan as of 2026-09-16. Supersede sections of this via <code>openspec</code> proposals as the build proceeds, same convention as the outline itself.</p>
+<hr>
+<h2>1. What&#39;s being built, one paragraph</h2>
+<p>A public web app where fixed-wireless ISP support trainees work through case-based training scenarios rendered as synthetic replicas of the real dashboards they&#39;ll use on the job (billing/CRM, radio link view, network controller, and a device/profile-management portal). The pedagogical core — commit to a hypothesis before more evidence unlocks, get scored on revision not just correctness — is fixed and unlikely to change. Everything else (which dashboards exist, how many cases, what reference material surrounds them) is scoped in phases below.</p>
+<h2>2. Team and resourcing</h2>
+<p>One developer (Robin), domain expertise supplied from his own Tier 1 support role at a fixed-wireless ISP, building with Claude Code as an active collaborator on both code and content. No other contributors currently. This is the single biggest constraint on the plan — see Risk R1.</p>
+<h2>3. Decision log</h2>
+<p>Decisions already made, with rationale, so later questions (&quot;why does it work this way?&quot;) don&#39;t require re-litigating them:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D1</td>
+<td>New repo (<code>noisefloor</code>), not inside an existing monorepo</td>
+<td>Public product, different audience/deploy cadence/eventual billing than internal tools. Conventions mirrored from <code>kerfy</code>, code not shared.</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Stack mirrors <code>kerfy</code> exactly: pnpm workspaces, React 19 + Vite + Tailwind v4, Fastify 5 + Drizzle + Postgres + Zod, Better Auth</td>
+<td>Zero ramp-up; proven working stack.</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Vendor naming: generic in UI (&quot;radio link view&quot;), precise only inside gotcha/KB explanations, footer disclaimer</td>
+<td>Limits trademark exposure while keeping technical precision where it matters.</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Reference screenshots sourced from vendors&#39; public demo instances only, kept outside the repo</td>
+<td>Removes any question about employer-owned material touching a public product.</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>Auth via Better Auth&#39;s magic-link plugin, mirroring <code>kerfy</code>&#39;s implementation (Resend for delivery, console-logged link in local dev, cross-subdomain cookie handling for <code>noisefloor.ca</code> / <code>api.noisefloor.ca</code>)</td>
+<td>Proven pattern, no password-reset surface to build or support.</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Git workflow: commit and push continuously; infra via Railway CLI + Vercel CLI directly, human logs in when a CLI needs it</td>
+<td>Consistent with how every other project here runs.</td>
+</tr>
+<tr>
+<td>D7</td>
+<td><code>openspec</code> initialized in Phase 0, not retrofitted later</td>
+<td>Explicit lesson from <code>kerfy</code>, where it was skipped and never added.</td>
+</tr>
+<tr>
+<td>D8</td>
+<td><code>sreditor</code> CLI installed globally, pointed at this repo</td>
+<td>Robin&#39;s own SR&amp;ED-eligibility tool; judges archived openspec changes against the CRA three-part test in near-real-time instead of reconstructing a claim at filing time. No cost unless <code>judge</code>/<code>rollup</code>/<code>report</code> are actually run (bring-your-own Anthropic key).</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>A 4th dashboard family, <code>device</code> (GDMS-style device/profile management portal), added to scope</td>
+<td>Robin&#39;s real ticket load includes VoIP ATA and IPTV set-top-box issues whose actual fix lives in a device-management cloud portal, not in radio/CRM/NMS. Chosen deliberately over deferring to a later phase.</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>A standalone, public knowledge-base (<code>/kb</code>) section, separate from the gotcha index</td>
+<td>Gotchas stay small and story-driven per outline principle 7; the KB is a broader reference (RF fundamentals, terminology, glossary) readable independent of any case, authored by Claude and reviewed by Robin for accuracy, open to anonymous visitors.</td>
+</tr>
+<tr>
+<td>D11</td>
+<td>Free-text scoring: keyword/phrase rubric in v1; LLM grading is a v2 consideration, rubric shape kept LLM-friendly now</td>
+<td>Avoids per-request LLM cost and latency in v1 while not closing the door later.</td>
+</tr>
+<tr>
+<td>D12</td>
+<td>Chart rendering: hand-rolled SVG primitives, not a charting library</td>
+<td>Full control over the &quot;looks like the real tool&quot; fidelity target; revisit only if <code>LinkCapacityChart</code> proves painful to build this way.</td>
+</tr>
+</tbody></table>
+<h2>4. Phased delivery plan</h2>
+<p>Phases 0–2 are the critical path: get <em>one</em> case genuinely playable end-to-end as fast as possible, because that&#39;s the first artifact worth anyone&#39;s opinion. Everything after that — the device family, the KB, additional cases — is real, committed scope, but explicitly sequenced <em>after</em> that milestone so breadth doesn&#39;t delay it.</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Deliverable</th>
+<th>Depends on</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>0 — Foundation</strong></td>
+<td>pnpm workspace (<code>apps/web</code>, <code>apps/api</code>, <code>packages/shared</code>, <code>packages/dashboards</code>, <code>packages/cases</code>); <code>openspec init</code>; Zod schemas for Case/World/Stage; seeded RNG; the five series generators, unit-tested; Better Auth + magic link wired; empty Postgres via Drizzle; Railway (API+DB) and Vercel (web) both serving a &quot;hello&quot; page at <code>noisefloor.ca</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>1 — First component</strong></td>
+<td><code>crm/LinkCapacityChart</code> (24h + 1y) rendering from <code>World</code>, with annotation support; <code>/dev/gallery</code> dev route; one Playwright visual snapshot</td>
+<td>Phase 0</td>
+</tr>
+<tr>
+<td><strong>2 — Minimal playable case</strong> <em>(first thing worth showing anyone)</em></td>
+<td>Case player route; commit-before-reveal; server-side stage gating; scoring incl. revision bonus; attempts persisted; case 001 authored for <strong>stages 1, 4, 5 only</strong> (the foliage arc), using only <code>LinkCapacityChart</code> + text evidence</td>
+<td>Phase 1</td>
+</tr>
+<tr>
+<td><strong>3 — Full case 001 + radio/nms families</strong></td>
+<td><code>radio/*</code> and <code>nms/*</code> components per outline §7, gallery entries, snapshots; case 001 completed to all 10 stages + debrief + optional branches</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td><strong>4 — Public v1 launch</strong></td>
+<td>Landing page with anonymous stage-1 demo; <code>/cases</code>, <code>/gotchas</code>, <code>/me</code>; gotcha index seeded from case 001 (10 gotchas); synthetic-data check script wired into CI; footer (about/not-affiliated/contact)</td>
+<td>Phase 3</td>
+</tr>
+<tr>
+<td><strong>5 — Device family</strong> <em>(new, from D9)</em></td>
+<td><code>device/</code> dashboard components (device list, profile detail, provisioning/push status); <code>World</code> schema extended to represent profile/provisioning state, not just RF data; VoIP/ATA &quot;config corruption&quot; case authored</td>
+<td>Phase 4, or earlier if it doesn&#39;t block Phase 2&#39;s milestone</td>
+</tr>
+<tr>
+<td><strong>6 — Knowledge base</strong> <em>(new, from D10)</em></td>
+<td><code>/kb</code> route and content store; first pass of articles (RF fundamentals, dashboard/instrument glossary), Claude-drafted, Robin-reviewed; cross-links between KB entries and gotchas/cases</td>
+<td>Phase 4, in parallel with Phase 5</td>
+</tr>
+<tr>
+<td><strong>7 — Content velocity</strong></td>
+<td>Cases from the backlog (§5 below) authored; <code>packages/cases/README.md</code> authoring guide covering both authoring modes (Robin-authored case/gotcha content vs. Claude-drafted/Robin-reviewed KB content)</td>
+<td>Phase 4–6</td>
+</tr>
+<tr>
+<td><strong>Later, not scheduled</strong></td>
+<td>Cohorts/assignment for training leads; LLM-graded free text (v2); case-authoring UI; case import/export</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h2>5. Content backlog (feeding Phase 7)</h2>
+<p>Seeded from Robin&#39;s own support tickets, genericized before anything gets authored (see §7 privacy rules):</p>
+<ul>
+<li>Difficulty-1 &quot;standard T1 checklist&quot; warm-up case (unplug/reseat/check-lights) — tests whether a trainee overthinks something the basics would fix.</li>
+<li>VoIP/ATA &quot;config corruption&quot; case — device shows registered, no dial tone, real fix is recreating the device&#39;s profile in the device-management portal. Needs the Phase 5 <code>device</code> family.</li>
+<li>Recurring IPTV set-top-box flakiness case — elimination through the stack (radio → router → box). Needs one concrete ticket example before it can be authored; revisit with Robin.</li>
+<li>Flagship &quot;no-fix&quot; case — upstream transport under replacement, customer on a backup service for weeks, correct action is monitor + honest expectation-setting, nothing to dispatch. Directly demonstrates outline principle 5. Candidate for pulling into Phase 3/4 rather than leaving in Phase 7, given how well it demonstrates the core thesis of the product.</li>
+<li>&quot;Which portal do I check&quot; friction — likely a gotcha or in-case stage flavor, not a standalone case.</li>
+</ul>
+<h2>6. Risk register</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Risk</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R1</td>
+<td><strong>Single point of failure on content.</strong> Robin is the only domain expert and is not full-time on this. Case-authoring is inherently slow (structured data + narrative + rubric, per case).</td>
+<td>KB content is Claude-drafted to reduce Robin&#39;s authoring load on at least one content type. Backlog is captured in writing (this doc + memory) so idle time doesn&#39;t lose ideas. Authoring guide (Phase 7) aims to make each new case faster to produce once the pattern is established.</td>
+</tr>
+<tr>
+<td>R2</td>
+<td><strong>Scope crept before code existed.</strong> Device family and KB were both added during planning, before Phase 0 started.</td>
+<td>Explicit phase sequencing (§4): both are real phases (5, 6), but sit after the Phase 2 minimal-playable-case milestone, not before it.</td>
+</tr>
+<tr>
+<td>R3</td>
+<td><strong>Privacy/legal exposure</strong> — real customer data, employer data, or vendor trademarks leaking into a public product.</td>
+<td>Outline §12 rules (synthetic-only data, generic UI naming, screenshots never committed) now explicitly extended to the new <code>device</code> family and KB content (not just the original 3 dashboard families). <code>pnpm check:synthetic</code> CI script (Phase 4) greps case content for real-looking identifiers before merge.</td>
+</tr>
+<tr>
+<td>R4</td>
+<td><strong><code>World</code> schema under-scoped for the device family.</strong> The existing schema (<code>link</code>, <code>series</code>) is RF-specific; profile/provisioning data doesn&#39;t fit it as-is.</td>
+<td>Called out explicitly as its own design task in Phase 5, to be scoped in an openspec proposal before component work starts — not discovered mid-build.</td>
+</tr>
+<tr>
+<td>R5</td>
+<td><strong>Auth cross-subdomain cookie fragility.</strong> <code>kerfy</code> had a real, previously-hit bug here (missing <code>secure: true</code> alongside <code>SameSite=None</code> silently broke local sign-in).</td>
+<td>Mirroring the already-debugged <code>kerfy</code> pattern exactly (D5) rather than re-deriving it, adapted to the <code>noisefloor.ca</code> parent domain.</td>
+</tr>
+<tr>
+<td>R6</td>
+<td><strong>Chart fidelity effort.</strong> Hand-rolled SVG primitives (D12) could become a time sink if <code>LinkCapacityChart</code> turns out to need more than <code>StackedBars</code>/<code>LineTrace</code> can cleanly express.</td>
+<td>Explicitly reversible decision per the outline; if Phase 1 stalls here, fall back to a charting library rather than over-investing in primitives.</td>
+</tr>
+<tr>
+<td>R7</td>
+<td><strong>Reference screenshot access.</strong> Component fidelity depends on reaching vendors&#39; public demo instances (D4).</td>
+<td>If a given vendor has no public demo, fall back to documentation screenshots/marketing material as reference, still never committed to the repo.</td>
+</tr>
+<tr>
+<td>R8</td>
+<td><strong>Infra cost creep.</strong> Railway (API+Postgres), Vercel (web), Resend (email), and later LLM-grading API calls all cost something.</td>
+<td>Everything currently proposed is within typical hobby/free tiers at v1 scale (low user count, low email volume, no per-request LLM calls in v1 scoring). Re-assess before turning on LLM grading (v2) or cohorts (later), both of which have real per-use cost.</td>
+</tr>
+</tbody></table>
+<h2>7. Governance / process</h2>
+<ul>
+<li><strong>Spec-driven changes:</strong> every feature becomes an <code>openspec</code> proposal before code, per outline §6. This is now a hard habit (D7), not a nice-to-have.</li>
+<li><strong>SR&amp;ED tracking:</strong> <code>sreditor</code> runs against this repo&#39;s archived openspec changes (D8). Side effect worth naming: since proposals are now visible to a tool applying the CRA&#39;s three-part test, there&#39;s a light incentive to write proposals with genuine technical rationale rather than boilerplate — good discipline, not something to design around.</li>
+<li><strong>Version control:</strong> continuous commit-and-push, no long-lived feature branches implied by the plan.</li>
+<li><strong>Deploy:</strong> Railway CLI (API + Postgres) and Vercel CLI (web) driven directly; human authentication (login) requested from Robin when a CLI needs it, never bypassed.</li>
+</ul>
+<h2>8. Definition of &quot;v1 done&quot;</h2>
+<p>Unchanged from outline §15 — repeated here since it&#39;s the acceptance criteria a manager would actually check against:</p>
+<ul>
+<li>A stranger can open <code>noisefloor.ca</code>, play stage 1 of case 001 without logging in, and understand what the site is.</li>
+<li>A logged-in trainee can complete case 001 end-to-end, see a scored path with a revision bonus, read an annotated debrief, and see ten gotchas indexed.</li>
+<li>No real customer, employer, or vendor-owned data anywhere in the repo or the deployed site.</li>
+<li>Every dashboard renders from <code>World</code>; changing one number in case 001 changes the chart.</li>
+<li>CI runs unit tests, the synthetic-data check, and visual snapshots for every dashboard component.</li>
+</ul>
+<p>Note: this definition predates the device-family and KB decisions (D9, D10). Whether those are required for &quot;v1 done&quot; or ship as fast-follows after the above is a call worth making explicitly once Phase 4 is in sight — flagged here rather than silently assumed either way.</p>
+<hr>
+<p><em>Plan written 2026-09-16, alongside the founding brief. Update via <code>openspec</code> proposals as phases complete or scope changes; keep §3 (decision log) append-only rather than editing past entries, so the record of &quot;why&quot; survives.</em></p>
+
+</body></html>

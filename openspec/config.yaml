@@ -1,0 +1,48 @@
+schema: spec-driven
+
+context: |
+  noisefloor.ca — case-based training web app for fixed-wireless ISP support
+  trainees. Full product/technical spec: NOISEFLOOR-OUTLINE.md at repo root.
+  Delivery phasing, decision log, and risk register: PROJECT-PLAN.md at repo
+  root. Read both before proposing a change — they are the source of truth,
+  this file is only a pointer to them.
+
+  Stack (mirrors the `kerfy` project's conventions exactly): pnpm workspaces,
+  TypeScript throughout, strict mode. apps/web: React 19, React Router 8,
+  Vite 8, Tailwind v4. apps/api: Fastify 5, Drizzle ORM + pg, Better Auth
+  (magic-link plugin), Zod. packages/shared: Zod schemas + pure generator
+  functions, no React/DB. packages/dashboards: the React component library
+  (crm/radio/nms/device families). packages/cases: case content, validated
+  against packages/shared schemas at build time.
+
+  Conventions: conventional commits; ESLint flat config + typescript-eslint;
+  Vitest for unit tests, Playwright for e2e + visual snapshots; continuous
+  commit-and-push, no long-lived feature branches.
+
+  Standing rules that apply to every change, not just the one being proposed:
+  no real customer/employer/vendor data anywhere (synthetic-only, see
+  NOISEFLOOR-OUTLINE.md §12); vendor names generic in UI copy, precise only in
+  gotcha/KB content; cases and gotchas are authored from Robin's real support
+  experience, KB content is Claude-drafted and Robin-reviewed.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

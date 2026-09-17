@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>noisefloor.ca — Project Outline</title>
+<style>
+  @page { size: Letter; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.55;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-size: 15px;
+  }
+  h1, h2, h3, h4 { line-height: 1.25; color: #111; font-weight: 650; }
+  h1 { font-size: 1.9rem; border-bottom: 3px solid #2b6cb0; padding-bottom: 0.4rem; margin-top: 0; }
+  h2 { font-size: 1.35rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; margin-top: 2.2rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.6rem; color: #2b6cb0; }
+  blockquote {
+    border-left: 4px solid #2b6cb0;
+    margin: 1rem 0;
+    padding: 0.4rem 1rem;
+    color: #444;
+    background: #f4f8fb;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: #f2f2f2;
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+  pre {
+    background: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.86rem;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 0.45rem 0.65rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #eef4fa; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  hr { border: none; border-top: 1px solid #d0d7de; margin: 2rem 0; }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: 0.2rem 0; }
+  a { color: #2b6cb0; }
+  em { color: #555; }
+  strong { color: #111; }
+</style>
+</head>
+<body>
+<h1>noisefloor.ca — Project Outline</h1>
+<blockquote>
+<p>Case-based training for fixed-wireless ISP support technicians.
+Learn to read the instruments, not memorize the answers.</p>
+</blockquote>
+<p>This document is the founding brief for the <code>noisefloor</code> repository. It is written to be read cold by a developer (human or Claude Code) who has never seen the conversation that produced it. Everything a first <code>openspec</code> proposal needs should be derivable from here. Where a decision is still open it is marked <strong>[DECIDE]</strong> and listed again in §14.</p>
+<hr>
+<h2>1. What this is</h2>
+<p>A public website where support trainees work through <strong>cases</strong>: real-shaped support tickets told in stages. Each stage reveals one more piece of evidence (a dashboard chart, a radio link panel, a ping log, a customer&#39;s words), and the trainee must commit to a hypothesis or a next action before the next stage unlocks. The skill being trained is not &quot;know the answer&quot; but <strong>revise a theory as evidence arrives, and say what you touched</strong>.</p>
+<p>The domain is fixed-wireless ISP support (Ubiquiti airMAX / UISP / a typical WISP billing-CRM), because:</p>
+<ul>
+<li>It is narrow enough for one person with domain knowledge to own.</li>
+<li>Every WISP in Canada and the US has Tier 1 trainees and almost no training material beyond vendor docs.</li>
+<li>The instruments (link capacity charts, signal-over-time, modulation bars, pinglogs) are visual and learnable, and nobody teaches how to read them.</li>
+</ul>
+<p>The name comes from the first number a good tech learns to read. The product promise is the same thing: separate the signal from what&#39;s just there.</p>
+<h2>2. Who it is for</h2>
+<p><strong>Primary:</strong> Tier 1 support trainees at fixed-wireless ISPs, first 0–12 months. They can log into the CRM and the radio but do not yet know what the graphs mean or what changed.</p>
+<p><strong>Secondary:</strong> Tier 1s who want to become Tier 2. Cases have optional deeper branches (RF theory, config rollback, channel planning) for them.</p>
+<p><strong>Tertiary (later):</strong> ISP training leads who want to assign cases to a cohort and see who is guessing vs reasoning. This is the eventual paid tier and is <strong>out of scope for v1</strong> — but the data model should not make it impossible.</p>
+<p>Not for: generic call-centre / helpdesk training. No &quot;how to handle an angry customer&quot; as a standalone module. Customer communication appears only inside a technical case, as a stage.</p>
+<h2>3. Product principles</h2>
+<ol>
+<li><strong>Evidence is a dashboard, not a paragraph.</strong> Trainees must read the same instruments they&#39;ll read at work. A case never says &quot;signal is −70 dBm&quot;; it shows the panel that says it.</li>
+<li><strong>Commit before reveal.</strong> No stage unlocks without a stated hypothesis or action. Skipping ahead is not possible.</li>
+<li><strong>Reward revision, not just the final answer.</strong> A trainee who is wrong at stage 1 and correct by stage 3 has demonstrated the skill. Scoring reflects the path.</li>
+<li><strong>&quot;What changed, and when?&quot;</strong> is a first-class prompt that appears in every case. Most real tickets fall to it.</li>
+<li><strong>Some cases have no fix.</strong> &quot;Monitor, note, schedule a survey&quot; is a valid and sometimes correct final action. Trainees who always reach for a config change are dangerous.</li>
+<li><strong>The customer call is a deliverable.</strong> At least one stage per case asks what you&#39;d say to the person. Judged on honesty and expectation-setting.</li>
+<li><strong>Gotchas are indexed, not lectured.</strong> Vendor-specific traps (units, test-vs-apply, memory in router mode) are tagged on cases and aggregate into a reference that grows from stories.</li>
+<li><strong>Nothing real leaks.</strong> No real customer names, IPs, MACs, coordinates, tower names, or employer branding. See §12.</li>
+</ol>
+<h2>4. Core concept: dashboards are components, cases are data</h2>
+<p>This is the architectural spine.</p>
+<p>A case does <strong>not</strong> contain screenshots. It contains <strong>structured data</strong> — signal values, time series, a station list, a shaper value — and the site renders synthetic dashboards from that data using a library of React components that look like the real tools.</p>
+<p>Consequences:</p>
+<ul>
+<li>Authoring a new case is editing JSON (or TS), not producing artwork.</li>
+<li>A case variant (&quot;same story, foliage loss 3 dB worse&quot;) is a one-field change.</li>
+<li>Data can be generated: a foliage curve, a diurnal usage pattern, a shaper collapse are all functions of a few parameters.</li>
+<li>Components are testable in isolation with Vitest and visually with Playwright screenshots.</li>
+<li>The real vendor screens are used only as <strong>private, uncommitted visual reference</strong> during component development.</li>
+</ul>
+<p>The three tool families to recreate (name each family neutrally in code; do not use vendor names in user-facing copy unless licensing is confirmed — <strong>[DECIDE]</strong> see §14):</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Internal name</th>
+<th>What it shows</th>
+<th>Real-world analogue</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Billing/CRM</td>
+<td><code>crm</code></td>
+<td>customer header, service tabs, Link Capacity stacked chart + signal trace, Summary with pinglog heatmap, realtime ping modal, bandwidth history</td>
+<td>typical WISP CRM (Sonar/Splynx/Powercode-style)</td>
+</tr>
+<tr>
+<td>Radio link view</td>
+<td><code>radio</code></td>
+<td>local/remote device cards, throughput gauges, RF environment bar, signal + chain bars, modulation rate bar (1X–8X), capacity/throughput/latency chart, device details (mode, uptime, CINR, noise floor, cable SNR, memory/CPU)</td>
+<td>airOS 8 link view</td>
+</tr>
+<tr>
+<td>Network controller</td>
+<td><code>nms</code></td>
+<td>device overview (throughput charts, utilization, link potential/capacity), Manage pane (backups, advanced), AP station list with airtime/capacity/connection time, RF scan</td>
+<td>UISP Network</td>
+</tr>
+</tbody></table>
+<p>Each family is a set of components in <code>packages/dashboards</code> (see §7).</p>
+<h2>5. Case model</h2>
+<h3>5.1 Case</h3>
+<pre><code class="language-ts">type Case = {
+  id: string;                 // &quot;c001-wet-leaves&quot;
+  slug: string;
+  title: string;              // &quot;It&#39;s slow when it rains&quot;
+  version: number;
+  difficulty: 1 | 2 | 3;
+  estimatedMinutes: number;
+  tags: string[];             // [&quot;foliage&quot;, &quot;shaping&quot;, &quot;units&quot;, &quot;router-mode&quot;]
+  gotchas: GotchaId[];        // links into the gotcha index
+  world: World;               // all synthetic data, see 5.2
+  opening: Opening;           // ticket text + first evidence
+  stages: Stage[];            // ordered
+  debrief: Debrief;           // the full story, told after completion
+  optionalBranches?: Branch[];// deeper dives, unlocked after debrief
+};
+</code></pre>
+<h3>5.2 World</h3>
+<p>All the numbers a case needs, in one object, so every dashboard renders from the same truth.</p>
+<pre><code class="language-ts">type World = {
+  customer: { displayName: string; accountRef: string; plan: { down: number; up: number } };
+  site: { apName: string; sectorName: string; channelMHz: number; widthMHz: number };
+  cpe: Device;                // model, mode, firmware, uptime, memoryPct, cpuPct, cableSnrDb, cableLengthM
+  ap: Device;
+  link: {
+    distanceM: number;
+    signalLocalDbm: number; signalRemoteDbm: number;
+    chainsLocal: [number, number]; chainsRemote: [number, number];
+    noiseFloorLocalDbm: number; noiseFloorRemoteDbm: number;
+    cinrLocalDb: number; cinrRemoteDb: number;
+    rateLocal: 1|2|3|4|5|6|7|8; rateRemote: 1|2|3|4|5|6|7|8;
+    capacityDownMbps: number; capacityUpMbps: number;
+    latencyMs: number;
+    linkPotentialPct: number;
+    airtimeTxPct: number; airtimeRxPct: number;
+  };
+  series: {
+    // each is an array of { t: ISO8601, v: number } or a generator spec (see 5.3)
+    capacityDown24h: SeriesRef;
+    usedDown24h: SeriesRef;
+    signalTrace24h: SeriesRef;
+    capacityDown1y: SeriesRef;
+    signalTrace1y: SeriesRef;
+    throughputRx1h: SeriesRef;
+    pinglog: PinglogRef;      // day × minute grid, values: ok | slow | loss
+  };
+  stationList: StationRow[];  // the AP&#39;s other customers (synthetic)
+  events: WorldEvent[];       // timestamped things that happened: reboot, config change, etc.
+};
+</code></pre>
+<h3>5.3 Series generators</h3>
+<p>Time series are expensive to hand-author and cheap to generate. <code>packages/shared/src/gen/</code> holds pure functions:</p>
+<ul>
+<li><code>diurnalUsage({ peakMbps, peakHour, offHours, noise })</code> — residential download pattern.</li>
+<li><code>noisyCeiling({ base, jitter, spikes })</code> — a capacity ceiling that bounces.</li>
+<li><code>foliageYear({ leafOnDbm, leafOffDbm, leafOnDate, leafOffDate, growthDbPerYear })</code> — seasonal signal trace.</li>
+<li><code>shaperCollapse({ at, toKbps })</code> — throughput drops to a trickle at a timestamp.</li>
+<li><code>pinglogMonth({ baseLossPct, outages: [{ start, minutes }], eveningSpeckle })</code>.</li>
+</ul>
+<p>A <code>SeriesRef</code> is either inline points or <code>{ gen: &quot;foliageYear&quot;, params: {...} }</code>. Rendering resolves generators with a seeded RNG so the same case always draws the same chart.</p>
+<h3>5.4 Stage</h3>
+<pre><code class="language-ts">type Stage = {
+  id: string;
+  title: string;
+  reveal: Evidence[];         // what becomes visible at this stage
+  prompt: Prompt;             // what the trainee must commit to
+  rubric: Rubric;             // how the commitment is scored
+  feedback: Feedback;         // shown after commitment, before next stage
+};
+
+type Evidence =
+  | { kind: &quot;dashboard&quot;; family: &quot;crm&quot;|&quot;radio&quot;|&quot;nms&quot;; view: string; worldSlice?: string; annotate?: boolean }
+  | { kind: &quot;customerSays&quot;; text: string }
+  | { kind: &quot;ticketNote&quot;; author: string; text: string; at: string }
+  | { kind: &quot;colleagueSays&quot;; role: &quot;T1&quot;|&quot;T2&quot;|&quot;field&quot;; text: string };
+
+type Prompt =
+  | { kind: &quot;hypothesis&quot;; options: Option[]; allowFreeText: true }
+  | { kind: &quot;nextCheck&quot;; options: Option[] }         // &quot;what would you look at next?&quot;
+  | { kind: &quot;whatChanged&quot;; freeText: true }          // always includes a time field
+  | { kind: &quot;customerMessage&quot;; freeText: true; minWords: number }
+  | { kind: &quot;ticketNote&quot;; freeText: true }
+  | { kind: &quot;action&quot;; options: Option[] };           // includes &quot;do nothing today&quot; where valid
+</code></pre>
+<h3>5.5 Rubric and scoring</h3>
+<ul>
+<li>Option prompts: each option has <code>score: 0..3</code> and <code>feedback</code>. Wrong-but-reasonable options score 1–2 and say why they&#39;re reasonable.</li>
+<li>Free-text prompts (hypothesis, whatChanged, customerMessage, ticketNote): v1 scores by <strong>keyword/phrase rubric</strong> (<code>mustMention</code>, <code>mustNotMention</code>, <code>bonus</code>). An LLM grader is a <strong>v2 consideration</strong>, not v1 — keep the rubric shape LLM-friendly (criteria as sentences) so it can be swapped in.</li>
+<li>Path scoring: total = Σ stage scores, plus a <strong>revision bonus</strong> when a later hypothesis corrects an earlier wrong one. A trainee who was wrong at stage 1 and right by stage 3 can outscore one who was lucky at stage 1 and never restated.</li>
+<li>Customer-message rubric criteria are things like: says nothing is broken if true; sets a timeline; does not promise a fix that isn&#39;t scheduled; owns a mistake if the case contains one.</li>
+</ul>
+<h3>5.6 Debrief</h3>
+<p>Shown after the final stage. The full story in prose, with each dashboard re-shown <strong>annotated</strong> (callouts on the exact feature the evidence hinged on). Lists the gotchas hit. Links to optional branches.</p>
+<h3>5.7 Gotcha index</h3>
+<pre><code class="language-ts">type Gotcha = { id: string; title: string; oneLiner: string; explanation: string; cases: string[] };
+</code></pre>
+<p>Seed gotchas from case 001 (see §9). The index page lists all gotchas with the cases that contain them. This is the &quot;reference manual that grew from stories.&quot;</p>
+<h2>6. Repository and stack</h2>
+<p><strong>[DECIDE]</strong> New repository (<code>noisefloor</code>) vs. new apps inside the existing ticketing-app monorepo. Recommendation: <strong>new repo</strong>, same stack, same conventions. The ticketing app is an internal-to-employer tool; noisefloor is a public product with a different audience, deploy cadence, and (eventually) billing. Shared conventions can be copied; shared code should not be.</p>
+<p>Stack (mirror of the ticketing app, chosen for zero ramp-up):</p>
+<ul>
+<li><strong>Monorepo:</strong> pnpm workspaces, TypeScript throughout.</li>
+<li><strong>Frontend <code>apps/web</code>:</strong> React 19, React Router 8, Vite 8, Tailwind CSS v4, Lucide icons. Playwright for e2e and for <strong>component visual snapshots</strong> (used to keep dashboards looking right).</li>
+<li><strong>Backend <code>apps/api</code>:</strong> Fastify 5, Drizzle ORM + Postgres (<code>pg</code>), Better Auth, Zod.</li>
+<li><strong>Packages:</strong><ul>
+<li><code>packages/shared</code> — Zod schemas for Case/World/Stage/etc., series generators, seeded RNG, scoring functions. Pure, no React, no DB. Everything here is unit-tested.</li>
+<li><code>packages/dashboards</code> — the React component library for <code>crm</code>, <code>radio</code>, <code>nms</code>. Depends on <code>shared</code> for types. Has its own Storybook-less &quot;gallery&quot; route in <code>apps/web</code> (<code>/dev/gallery</code>) for visual development against reference screenshots.</li>
+<li><code>packages/cases</code> — the case content, one folder per case, exported as typed objects validated against <code>shared</code> schemas at build time.</li>
+</ul>
+</li>
+<li><strong>Tooling:</strong> Vitest, ESLint + typescript-eslint, tsx. <strong>OpenSpec</strong> for spec-driven changes — every feature below should become an <code>openspec</code> proposal before code.</li>
+<li><strong>Infra:</strong> Railway (API + Postgres), Vercel (web). Domain: <code>noisefloor.ca</code> (registered, WHC). Web at apex; API at <code>api.noisefloor.ca</code>.</li>
+</ul>
+<p>Why cases are a package and not DB rows in v1: cases are authored by the developer, version-controlled, reviewed in PRs, and validated at build. The DB holds <strong>users and attempts</strong>, not content. If a case-authoring UI is ever built (§13), content can move; the Zod schema is the contract either way.</p>
+<h2>7. <code>packages/dashboards</code> — component inventory</h2>
+<p>Each component takes a <code>World</code> (or a slice) and renders. All are read-only in v1 except where a stage explicitly needs an interactive element (e.g. a shaper input in a &quot;what would you set?&quot; prompt).</p>
+<p>Visual fidelity target: <strong>recognizably the tool</strong> to someone who uses it daily, without being a pixel copy. Use the tool&#39;s layout and information hierarchy; use our own palette, type, and icons. See §12 on trademarks.</p>
+<h3><code>crm/</code></h3>
+<ul>
+<li><code>CustomerHeader</code> — name, account ref, status chips.</li>
+<li><code>ServiceBar</code> — service label + tab strip (Edit / Speedometer / Bandwidth History / Link Capacity / IPs / Summary).</li>
+<li><code>LinkCapacityChart</code> — stacked bars (used + remaining), optional package-limit line, period selector (24h / 1y), with signal trace panel beneath. <strong>The single most important component in v1.</strong></li>
+<li><code>PinglogHeatmap</code> — day rows × minute columns, ok/slow/loss colouring, month selector.</li>
+<li><code>RealtimePingModal</code> — bar chart of RTT, loss %, avg, source/target.</li>
+<li><code>SummaryPanel</code> — AP name/IP, radio login, CPE-issue banner with task/timestamp.</li>
+</ul>
+<h3><code>radio/</code></h3>
+<ul>
+<li><code>LinkHeader</code> — local/remote device cards (model, coords redacted/synthetic, MAC synthetic, TX power), throughput/capacity gauges, distance, link potential, airtime.</li>
+<li><code>RfEnvironmentBar</code> — spectrum occupancy strip with current channel marker.</li>
+<li><code>SignalPanel</code> — signal dBm with per-chain bars and Δ, noise floor.</li>
+<li><code>RateBar</code> — 1X–8X modulation bar with expected vs actual.</li>
+<li><code>LinkChart</code> — capacity / throughput / latency over time.</li>
+<li><code>DeviceDetails</code> — model, mode (router/bridge), firmware, uptime, memory %, CPU %, wireless (CINR, distance, noise floor), ethernet (LAN speed, cable SNR with red-below-threshold, cable length), GPS (AP only).</li>
+</ul>
+<h3><code>nms/</code></h3>
+<ul>
+<li><code>DeviceOverview</code> — throughput charts per interface, utilization %, link potential + capacity, &quot;Link Needs Improvement&quot; style status.</li>
+<li><code>DeviceManagePane</code> — device name, subscriber assignment, <strong>Backups</strong> (list with timestamps, restore action), Advanced, speed test, maintenance mode.</li>
+<li><code>ApStationList</code> — table: MAC, model, name, signal, remote signal, downlink/uplink capacity, airtime TX/RX, connection time, last IP, throughput RX/TX. Row highlight for &quot;this customer.&quot;</li>
+<li><code>ApLinkView</code> — the AP-side version of <code>radio/LinkHeader</code> with average capacity chart.</li>
+</ul>
+<h3>Shared chart primitives</h3>
+<p>Keep one internal chart layer (SVG, no heavy lib) in <code>dashboards/primitives/</code>: <code>StackedBars</code>, <code>LineTrace</code>, <code>Heatmap</code>, <code>Gauge</code>, <code>SegmentBar</code>. Tailwind for layout, inline SVG for plots. Avoid pulling in a charting library unless a primitive proves painful.</p>
+<h3>Annotation mode</h3>
+<p>Every dashboard component accepts <code>annotations?: Annotation[]</code> — callouts anchored to a data feature (a timestamp, a bar, a row). Used in debriefs and in feedback. <code>{ target: { series: &quot;signalTrace1y&quot;, t: &quot;2026-05-24&quot; }, label: &quot;Leaf-out. −8 dB in four days.&quot; }</code>.</p>
+<h2>8. <code>apps/web</code> — routes</h2>
+<pre><code>/                      landing: what this is, one demo stage playable without login
+/cases                 case list (difficulty, tags, time, completion state if logged in)
+/cases/:slug           case player (stages, commit-before-reveal)
+/cases/:slug/debrief   annotated debrief (locked until completion)
+/gotchas               gotcha index
+/gotchas/:id           gotcha detail + cases
+/me                    progress, attempts, scores
+/auth/*                Better Auth routes
+/dev/gallery           component gallery (dev only, not deployed to prod)
+</code></pre>
+<p>Case player behaviour:</p>
+<ul>
+<li>Left: evidence panel (accumulates; earlier evidence stays visible, collapsible).</li>
+<li>Right: current prompt. Commit is required; there is no skip.</li>
+<li>After commit: feedback for that stage, then &quot;Continue.&quot;</li>
+<li>Progress persists per attempt; a trainee can leave and return.</li>
+<li>Anonymous users can play case 001 stage 1 only (the landing demo); login required beyond.</li>
+</ul>
+<h2>9. Seed content: Case 001 — &quot;It&#39;s slow when it rains&quot;</h2>
+<p>Fully synthetic. Any resemblance to real customers is by design of the genre only.</p>
+<p><strong>Tags:</strong> foliage, seasonal-signal, chain-imbalance, shaping, units, router-mode-memory, what-changed, own-your-change
+<strong>Difficulty:</strong> 2 · <strong>~25 min</strong></p>
+<p><strong>World (headline values):</strong></p>
+<ul>
+<li>Customer &quot;M. Ferrier&quot;, account <code>SYN-00417</code>, plan 35/10 → later 50/10.</li>
+<li>Site: AP <code>SEC-A</code>, sector <code>RIDGE-5.8-A</code>, 5710 MHz, 20 MHz.</li>
+<li>CPE: PowerBeam-class 25 dBi dish, <strong>Router mode</strong>, memory 78 %, CPU 20 %, uptime 2d 18h, cable SNR +27 dB (red), 28 m.</li>
+<li>AP: sector, Bridge mode, uptime 30 d, cable SNR +30 dB, GPS 9 sats.</li>
+<li>Link: 402 m; signal −69 local / −66 remote; chains Δ5 / Δ6; noise floor −104 / −91; CINR +23 / +21; rate 6X both; capacity 66 down / 93 up; latency 1 ms; link potential 52 %; airtime 11 %.</li>
+<li>Another station on the AP: &quot;Lakeside Inn&quot;, NanoStation-class, −51 dBm, 140/148 capacity, airtime 1.8 %.</li>
+<li>Series: 24 h capacity noisy 55–80 with usage peaking 35 Mbps at 22:18 then dropping to ~0 at 02:18; 1 y signal via <code>foliageYear({ leafOnDbm: -72, leafOffDbm: -65, leafOnDate: &quot;05-24&quot;, leafOffDate: &quot;10-20&quot;, growthDbPerYear: 3 })</code>; pinglog with three short outages and one degraded evening in August; 1 h throughput via <code>shaperCollapse({ at: &quot;11:56&quot;, toKbps: 50 })</code>.</li>
+<li>Events: <code>11:21 UISP reconnect</code>, <code>11:52 config change on CPE by T1 (shaper)</code>, <code>11:56 throughput collapse</code>, <code>12:34 T2 restore</code>, <code>12:35 CPE reboot</code>.</li>
+</ul>
+<p><strong>Stages (in order):</strong></p>
+<ol>
+<li><strong>&quot;What does this graph tell you about capacity?&quot;</strong> — reveal <code>crm/LinkCapacityChart</code> (24 h). Prompt: hypothesis. Rubric: green+blue = capacity; usage never near ceiling; ceiling noisy; flat top ~60 in the night window is a plausible cap.</li>
+<li><strong>&quot;Why is the ceiling where it is?&quot;</strong> — reveal <code>radio/LinkHeader</code>, <code>SignalPanel</code>, <code>RateBar</code>. Prompt: nextCheck (options: realign / widen channel / check signal history / replace radio / nothing yet). Rubric: 20 MHz + 6X + TDD explains the number; chain imbalance and −69 at 400 m are the anomaly; correct next check is history, not a truck.</li>
+<li><strong>&quot;Should this be a dispatch?&quot;</strong> — reveal <code>radio/DeviceDetails</code> (cable SNR red, memory 78 %, router mode, uptime mismatch). Prompt: action. Rubric: not on its own; note items; bundle if a truck goes anyway.</li>
+<li><strong>&quot;This feels telling.&quot;</strong> — reveal <code>crm/LinkCapacityChart</code> (1 y). Prompt: hypothesis (free text). Rubric: seasonal → foliage; late-May cliff; year-over-year 3 dB worse → growth; realignment won&#39;t fix it; survey for mast height/trimming before spring.</li>
+<li><strong>&quot;What do you tell the customer?&quot;</strong> — Prompt: customerMessage. Rubric: nothing broken; seasonal; wet leaves absorb signal (not &quot;weigh down&quot;); what happens next; still above current usage; does not overpromise.</li>
+<li><strong>&quot;You changed the plan.&quot;</strong> — reveal ticketNote (T1 set shaper on CPE), then colleagueSays ×3 (techs can&#39;t hold a session). Prompt: hypothesis (options include &quot;blown horn / hardware&quot;, &quot;shaper misconfigured&quot;, &quot;memory&quot;, &quot;AP problem&quot;). Rubric: hardware doesn&#39;t wait for a config change; ask what changed and when.</li>
+<li><strong>&quot;Is she online?&quot;</strong> — reveal <code>crm/RealtimePingModal</code> (65 ms, 1 % loss) and same for Lakeside Inn (69 ms, 3 %). Prompt: whatChanged. Rubric: ping proves almost nothing about throughput; baseline is the neighbour; the only change is the shaper at 11:52.</li>
+<li><strong>&quot;I haven&#39;t done anything but I see traffic.&quot;</strong> — reveal <code>nms/DeviceOverview</code> (1 h, collapse to ~50 kbps, gaps where NMS lost contact, symmetric MB totals). Prompt: hypothesis. Rubric: trickle not service; symmetric traffic = management chatter; gaps = starved management; shaper in <strong>kbit/s</strong>.</li>
+<li><strong>&quot;Get it back.&quot;</strong> — reveal <code>nms/DeviceManagePane</code> (Backups section collapsed). Prompt: action (options: keep trying the web UI / restore NMS backup / SSH and disable shaper / power-cycle again / escalate to T2 with the exact change). Rubric: backup restore or SSH; escalating with the exact change is full marks too; web UI over 50 kbps is the wrong tool.</li>
+<li><strong>&quot;It&#39;s back.&quot;</strong> — reveal <code>nms/ApStationList</code> post-fix (30 Mbps RX, 8 ms, connection time 00:38). Prompt: ticketNote. Rubric: cause in kbit/s vs Mbps; window of outage; corrected by whom; recommendation: shape centrally; foliage survey carried forward.</li>
+</ol>
+<p><strong>Debrief:</strong> the full narrative with annotated re-shows of stages 1, 4, 8, 10.</p>
+<p><strong>Optional branch A — &quot;Would 40 MHz help?&quot;</strong> Rubric: +3 dB noise floor cost; may drop to 5X; RF scan shows neighbours; AP-wide decision; dish job first.
+<strong>Optional branch B — &quot;Why is downlink 64.7 and uplink 92.6?&quot;</strong> Rubric: channel width × modulation × TDD share; per-direction error/retry estimate; vendor math, not derivable exactly.</p>
+<p><strong>Gotchas seeded from this case:</strong></p>
+<ul>
+<li><code>shaper-units-kbps</code> — airOS traffic shaping fields are kbit/s.</li>
+<li><code>test-vs-apply</code> — Test reverts in ~3 min; Apply persists.</li>
+<li><code>router-mode-memory</code> — CPE in router mode runs hot on RAM; config pushes can tip it.</li>
+<li><code>chain-imbalance</code> — Δ&gt;3 dB between chains means off-axis or partial obstruction.</li>
+<li><code>ping-good-throughput-zero</code> — ICMP passes through a starved shaper; ping is not a throughput test.</li>
+<li><code>seasonal-signal-is-trees</code> — signal that follows the calendar is foliage; that follows the weather is wet foliage.</li>
+<li><code>what-changed-when</code> — before hardware theories, ask what changed and when.</li>
+<li><code>own-your-change</code> — the fastest fix for a multi-tech chase is the person who touched it saying so.</li>
+<li><code>channel-width-is-ap-wide</code> — width is a sector decision, not a customer knob.</li>
+<li><code>cable-snr-threshold</code> — cable SNR shown red under vendor threshold; marginal, not broken.</li>
+</ul>
+<h2>10. Data model (<code>apps/api</code>, Drizzle)</h2>
+<p>Users and attempts only. Content lives in <code>packages/cases</code>.</p>
+<pre><code>users            (Better Auth managed)
+attempts         id, user_id, case_id, case_version, started_at, completed_at, total_score, path_json
+stage_commits    id, attempt_id, stage_id, committed_at, prompt_kind, answer_json, score, feedback_shown
+gotcha_progress  user_id, gotcha_id, first_seen_case_id, seen_count
+</code></pre>
+<p><code>path_json</code> stores the ordered list of hypotheses so revision bonus can be computed and the &quot;you were here → here → here&quot; strip shown in <code>/me</code>.</p>
+<h2>11. API surface (<code>apps/api</code>, Fastify + Zod)</h2>
+<pre><code>GET  /cases                        list (public metadata only)
+GET  /cases/:slug                  case shell: opening + stage ids; NO rubrics, NO later-stage evidence
+GET  /cases/:slug/stage/:id        evidence for a stage — only if attempt has committed to prior stage
+POST /attempts                     start
+POST /attempts/:id/commit          { stageId, answer } → { score, feedback, nextStageId | debriefUnlocked }
+GET  /attempts/:id                 progress
+GET  /me/progress
+GET  /gotchas, /gotchas/:id
+</code></pre>
+<p>Rubrics and future-stage evidence never leave the server. The client cannot peek ahead by reading the case bundle. (This is why <code>packages/cases</code> is imported by the API, not shipped to the browser — the web app receives stage payloads, not the case object.)</p>
+<h2>12. Privacy, legal, and taste rules</h2>
+<ul>
+<li><strong>No real data.</strong> Customer names, account numbers, IPs, MACs, coordinates, tower names, SSIDs, employer names: all synthetic. Case content is reviewed for this in PR. A <code>pnpm check:synthetic</code> script greps <code>packages/cases</code> for RFC-1918-looking-but-real IPs, MAC patterns, and a denylist of real names/tokens.</li>
+<li><strong>Reference screenshots</strong> from real systems are kept <strong>outside the repo</strong> (<code>~/noisefloor-ref/</code>, gitignored path documented in README). Never committed, never deployed.</li>
+<li><strong>Vendor names and trademarks.</strong> <strong>[DECIDE]</strong> whether to name vendors in copy (&quot;Ubiquiti airOS&quot;, &quot;UISP&quot;). Recommendation for v1: describe generically in UI (&quot;radio link view&quot;, &quot;network controller&quot;, &quot;CRM&quot;) and name vendors only in gotcha explanations where precision matters, with a plain &quot;not affiliated&quot; line in the footer. Revisit if a vendor relationship ever exists.</li>
+<li><strong>Employer.</strong> The site is Robin&#39;s independent project. No employer branding, no employer data, no statements about a specific employer&#39;s network or practices. Cases are genre-typical, not employer-typical.</li>
+<li><strong>Tone.</strong> Practical, dry, respectful of the trainee. Feedback explains why a wrong answer was reasonable before saying why it&#39;s wrong. No gamification noise (no streaks, no confetti). A score and a path are enough.</li>
+</ul>
+<h2>13. Phases</h2>
+<p><strong>Phase 0 — Skeleton (get to a running monorepo)</strong></p>
+<ul>
+<li>pnpm workspace; <code>apps/web</code>, <code>apps/api</code>, <code>packages/shared</code>, <code>packages/dashboards</code>, <code>packages/cases</code>.</li>
+<li>Zod schemas for §5 in <code>shared</code>; seeded RNG; the five series generators with tests.</li>
+<li>Better Auth wired; empty Postgres via Drizzle; Railway + Vercel deploy of a &quot;hello&quot; page at <code>noisefloor.ca</code>.</li>
+<li>OpenSpec initialized; this document referenced from README.</li>
+</ul>
+<p><strong>Phase 1 — The one component that matters</strong></p>
+<ul>
+<li><code>crm/LinkCapacityChart</code> (24 h and 1 y) rendering from <code>World</code>, with annotation support.</li>
+<li><code>/dev/gallery</code> route showing it against the generator outputs for case 001.</li>
+<li>Playwright visual snapshot for it.</li>
+</ul>
+<p><strong>Phase 2 — Case engine</strong></p>
+<ul>
+<li>Case player route; commit-before-reveal; server-side stage gating; scoring incl. revision bonus; attempts persisted.</li>
+<li>Case 001 authored with stages 1, 4, 5 only (the foliage arc), using only <code>LinkCapacityChart</code> + text evidence. <strong>Playable end-to-end.</strong> This is the first thing worth showing anyone.</li>
+</ul>
+<p><strong>Phase 3 — Radio and NMS components</strong></p>
+<ul>
+<li><code>radio/*</code> and <code>nms/*</code> per §7, gallery entries, snapshots.</li>
+<li>Case 001 completed to all 10 stages + debrief + branches.</li>
+</ul>
+<p><strong>Phase 4 — Public v1</strong></p>
+<ul>
+<li>Landing with anonymous stage-1 demo; <code>/cases</code>; <code>/gotchas</code>; <code>/me</code>.</li>
+<li>Gotcha index seeded from §9.</li>
+<li>Synthetic-data check script in CI.</li>
+<li>Footer: about, not-affiliated, contact.</li>
+</ul>
+<p><strong>Phase 5 — Content velocity</strong></p>
+<ul>
+<li>Cases 002–005. Candidates: <em>interference from a new neighbour AP</em> (RF scan changes, capacity drops, signal unchanged); <em>&quot;my speed test is slow&quot; with a 100 Mbps LAN negotiation</em> (cable, not RF); <em>router-mode reboot loop</em> (memory); <em>the no-fix case</em> (marginal but stable, customer wants a tech, right answer is monitor and set expectations); <em>DHCP lease / CGNAT confusion</em> (not RF at all).</li>
+<li>Authoring guide in <code>packages/cases/README.md</code>.</li>
+</ul>
+<p><strong>Later (not planned in detail):</strong> cohorts and assignment for training leads; LLM-graded free text; case-authoring UI; case import/export.</p>
+<h2>14. Open decisions</h2>
+<ol>
+<li>New repo vs. inside existing monorepo. (Rec: new repo.)</li>
+<li>Name vendors in copy or stay generic. (Rec: generic in UI, precise in gotchas.)</li>
+<li>Free-text grading: keyword rubric v1 → LLM v2. (Rec: yes; design rubric as sentences now.)</li>
+<li>Chart layer: hand-rolled SVG primitives vs. a library. (Rec: primitives; reconsider if <code>LinkCapacityChart</code> gets painful.)</li>
+<li>Anonymous demo scope: stage 1 only, or stages 1–3? (Rec: stage 1; the commit-before-reveal hook is the demo.)</li>
+<li>Whether reference screenshots come from the real employer systems or the vendor&#39;s public demo. (Either is fine for private reference; the latter avoids any question.)</li>
+</ol>
+<h2>15. Definition of &quot;v1 done&quot;</h2>
+<ul>
+<li>A stranger can open <code>noisefloor.ca</code>, play stage 1 of case 001 without logging in, and understand what the site is.</li>
+<li>A logged-in trainee can complete case 001 end-to-end, see a scored path with a revision bonus, read an annotated debrief, and see ten gotchas indexed.</li>
+<li>No real customer, employer, or vendor-owned data anywhere in the repo or the deployed site.</li>
+<li>Every dashboard renders from <code>World</code>; changing one number in case 001 changes the chart.</li>
+<li>CI runs unit tests, the synthetic-data check, and visual snapshots for every dashboard component.</li>
+</ul>
+<hr>
+<p><em>Founding brief written 2026-09-16. Supersede with <code>openspec</code> proposals as they land; keep §3, §4 and §12 as standing principles unless deliberately changed.</em></p>
+
+</body></html>
