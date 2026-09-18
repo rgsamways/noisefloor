@@ -1,41 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(npm view *)",
-      "Bash(npm install *)",
-      "Bash(sreditor --version)",
-      "Bash(sreditor doctor *)",
-      "Bash(pandoc --version)",
-      "Bash(where chrome.exe)",
-      "Bash(where msedge.exe)",
-      "Bash(npx --yes marked --version)",
-      "Bash(npx --yes marked NOISEFLOOR-OUTLINE.md)",
-      "Bash(npx --yes marked PROJECT-PLAN.md)",
-      "Bash(rm -f /tmp/outline-body.html /tmp/plan-body.html /tmp/marked-err.log && cd /c/dev/noisefloor && git status --short)",
-      "Skill(claude-api)",
-      "Skill(claude-api:*)",
-      "WebFetch(domain:claude.com)",
-      "Bash(npx --yes openspec --help)",
-      "Bash(openspec init *)",
-      "Bash(pnpm install *)",
-      "Bash(pnpm -r list --depth -1)",
-      "Bash(timeout 8 pnpm exec tsx src/index.ts)",
-      "Bash(kill %1)",
-      "Bash(wait)",
-      "Bash(pg_isready -h localhost -p 5432)",
-      "Bash(net start *)",
-      "Bash(PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c \"SELECT 1;\")",
-      "Bash(pnpm exec *)",
-      "Bash(railway --version)",
-      "Bash(vercel whoami *)",
-      "Skill(use-railway)",
-      "Skill(use-railway:*)",
-      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
-      "Bash(DATABASE_URL=\"postgresql://postgres:OqYgnXomlWuYlcDvnunBVtrEJxAWUlSd@127.0.0.1:15432/railway\" timeout 30 pnpm exec drizzle-kit migrate)",
-      "Bash(PGPASSWORD=OqYgnXomlWuYlcDvnunBVtrEJxAWUlSd psql -h 127.0.0.1 -p 15432 -U postgres -d railway -c \"\\\\dt\")",
-      "Bash(taskkill //F //PID 1012)",
-      "Bash(taskkill //F //PID 156112)"
-    ],
+    "allow": [],
     "additionalDirectories": [
       "\\tmp"
     ]

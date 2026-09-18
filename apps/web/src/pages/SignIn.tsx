@@ -10,7 +10,10 @@ export function SignIn() {
     setStatus("sending");
     const { error } = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
+      // Must be absolute: Better Auth resolves a relative callbackURL
+      // against its own origin (the API), not the web app's — a relative
+      // "/" silently redirects back to the API instead of the web app.
+      callbackURL: `${window.location.origin}/`,
     });
     setStatus(error ? "error" : "sent");
   }

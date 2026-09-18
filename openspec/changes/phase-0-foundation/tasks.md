@@ -23,7 +23,7 @@
 
 - [x] 5.1 Add Better Auth with the `magicLink` plugin and Drizzle adapter, mirroring `kerfy`'s `auth.ts` (cross-subdomain cookie logic adapted to `noisefloor.ca`/`api.noisefloor.ca`, per `design.md`); verify Better Auth's own migration generates `user`/`session`/`account`/`verification` tables
 - [x] 5.2 Add `send-magic-link.ts`: Resend delivery when `RESEND_API_KEY` is set, console-logged link otherwise, mirroring `kerfy`'s implementation; verify a local sign-in request logs a usable link when no key is set
-- [ ] 5.3 Verify the three magic-link auth spec scenarios locally: new-email sign-in creates a user, returning-email sign-in reuses it, and a reused/expired link is rejected
+- [x] 5.3 Verify the three magic-link auth spec scenarios locally: new-email sign-in creates a user, returning-email sign-in reuses it, and a reused/expired link is rejected — all verified live against the Railway deployment: new email created user `XyQHWS6SGpBgABOK4ZFxzNEDsOYC9Mgt`; a second sign-in for the same email reused that exact user id; reusing a consumed token redirected with `?error=INVALID_TOKEN` and no session cookie. Cross-subdomain cookie behavior (the fourth spec requirement) is verified after DNS cutover in 8.3, since it only applies once served from a real `noisefloor.ca` subdomain
 
 ## 6. `apps/web` — scaffold and sign-in page
 
