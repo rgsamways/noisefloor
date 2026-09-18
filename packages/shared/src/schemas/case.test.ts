@@ -109,4 +109,35 @@ describe("CaseSchema", () => {
     const result = CaseSchema.safeParse(minimalCase({ stages: [] }));
     expect(result.success).toBe(false);
   });
+
+  it("defaults author to curated and visibility to public", () => {
+    const result = CaseSchema.parse(minimalCase());
+    expect(result.author).toEqual({ kind: "curated" });
+    expect(result.visibility).toBe("public");
+  });
+
+  it("accepts an explicit user-authored, private case", () => {
+    const result = CaseSchema.safeParse(
+      minimalCase({ author: { kind: "user", userId: "u_123" }, visibility: "private" }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a findTheFault stage referencing validator rule ids", () => {
+    const result = CaseSchema.safeParse(
+      minimalCase({
+        stages: [
+          {
+            id: "s1",
+            title: "What in this case doesn't hold together?",
+            reveal: [{ kind: "dashboard", family: "radio", view: "SignalPanel" }],
+            prompt: { kind: "findTheFault", freeText: true },
+            rubric: { kind: "findTheFault", tensionRuleIds: ["snr.rate-exceeds-cinr"] },
+            feedback: { text: "The modulation rate this link claims isn't supportable at this CINR." },
+          },
+        ],
+      }),
+    );
+    expect(result.success).toBe(true);
+  });
 });

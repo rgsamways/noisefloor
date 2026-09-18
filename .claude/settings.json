@@ -32,7 +32,15 @@
       "Bash(rm -f /c/dev/noisefloor/scratch-verify-signin.mjs)",
       "Bash(openspec archive *)",
       "Bash(VITE_API_URL=https://api-production-153a.up.railway.app pnpm exec vite --port 5173)",
-      "Bash(echo \"started, pid $!\")"
+      "Bash(echo \"started, pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"noisefloor.ca -> HTTP %{http_code}\\\\n\" https://noisefloor.ca/)",
+      "Bash(curl -s -o /dev/null -w \"api.noisefloor.ca/health -> HTTP %{http_code}\\\\n\" https://api.noisefloor.ca/health)",
+      "Bash(curl -s https://noisefloor.ca/)",
+      "Bash(curl -v https://api.noisefloor.ca/health)",
+      "Bash(curl -s --resolve noisefloor.ca:443:76.76.21.21 https://noisefloor.ca/)",
+      "Bash(curl -sv --resolve noisefloor.ca:443:76.76.21.21 https://noisefloor.ca/)",
+      "Bash(curl -sv https://noisefloor.ca/)",
+      "Bash(pnpm --filter @noisefloor/shared typecheck)"
     ],
     "additionalDirectories": [
       "\\tmp"

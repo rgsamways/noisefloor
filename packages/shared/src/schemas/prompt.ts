@@ -37,5 +37,14 @@ export const PromptSchema = z.discriminatedUnion("kind", [
     kind: z.literal("action"),
     options: z.array(OptionSchema),
   }),
+  // "What in this case doesn't hold together?" — the World is presented as
+  // authoritative and the trainee has to spot a deliberately injected
+  // inconsistency. Authoring this well requires the world-consistency
+  // validator (NOISEFLOOR-AUTHORING-PLAN.md §4.3); the UI to author one is
+  // later (Phase 6), this is just the schema-level hook.
+  z.object({
+    kind: z.literal("findTheFault"),
+    freeText: z.literal(true),
+  }),
 ]);
 export type Prompt = z.infer<typeof PromptSchema>;

@@ -31,5 +31,14 @@ export const RubricSchema = z.discriminatedUnion("kind", [
     kind: z.literal("freeText"),
     criteria: FreeTextRubricSchema,
   }),
+  // Pairs with Prompt's findTheFault kind — grading is "did they name (some
+  // of) these specific tensions", referencing the world-consistency
+  // validator's own rule ids (see validator/types.ts) rather than
+  // duplicating criteria text for something the validator already knows
+  // how to detect.
+  z.object({
+    kind: z.literal("findTheFault"),
+    tensionRuleIds: z.array(z.string()).min(1),
+  }),
 ]);
 export type Rubric = z.infer<typeof RubricSchema>;
