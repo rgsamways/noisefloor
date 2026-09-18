@@ -37,8 +37,8 @@
 
 ## 8. Deploy — Vercel (web) and DNS
 
-- [ ] 8.1 Provision a Vercel project for `apps/web`, pointed at the Railway API's temporary domain; verify the deployed web app serves the placeholder/sign-in page on its Vercel-issued temporary domain
-- [ ] 8.2 Point `noisefloor.ca` (apex) at Vercel and `api.noisefloor.ca` at Railway via DNS; verify both resolve and serve correctly
+- [x] 8.1 Provision a Vercel project for `apps/web`, pointed at the Railway API's temporary domain; verify the deployed web app serves the placeholder/sign-in page on its Vercel-issued temporary domain — deployed (project `web`, root directory `apps/web` for the pnpm workspace), verified via `vercel curl` past deployment protection: serves the correct `noisefloor` page shell. Production alias: `https://web-nine-ochre-28.vercel.app`
+- [ ] 8.2 Point `noisefloor.ca` (apex) at Vercel and `api.noisefloor.ca` at Railway via DNS; verify both resolve and serve correctly — **blocked on Robin's WHC registrar access**; required records added to both platforms and documented, waiting on DNS to actually be set
 - [ ] 8.3 Re-point the web app's API URL and Better Auth's `trustedOrigins`/`BETTER_AUTH_URL` at the final `noisefloor.ca`/`api.noisefloor.ca` domains; verify the cross-subdomain magic-link sign-in flow (spec requirement "session cookie usable across web and API subdomains") works end to end on the real domain, not just the temporary ones
 
 ## 9. Phase exit verification

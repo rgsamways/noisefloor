@@ -10,3 +10,6 @@ build/
 coverage/
 .sreditor/
 .claude/settings.local.json
+
+.vercel
+.env*
