@@ -2,6 +2,7 @@ import { LinkCapacityChart } from "@noisefloor/dashboards";
 import { Activity, ArrowRight, BookOpen, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router";
 import { BottomNav } from "../components/BottomNav";
+import { gallerySeed, galleryWorld } from "../lib/gallery-world";
 
 const COLUMNS = [
   {
@@ -60,7 +61,7 @@ export function Landing() {
         </div>
 
         <div className="md:mt-3">
-          <LinkCapacityChart />
+          <LinkCapacityChart world={galleryWorld} seed={gallerySeed} />
         </div>
       </section>
 

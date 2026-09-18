@@ -40,7 +40,11 @@
       "Bash(curl -s --resolve noisefloor.ca:443:76.76.21.21 https://noisefloor.ca/)",
       "Bash(curl -sv --resolve noisefloor.ca:443:76.76.21.21 https://noisefloor.ca/)",
       "Bash(curl -sv https://noisefloor.ca/)",
-      "Bash(pnpm --filter @noisefloor/shared typecheck)"
+      "Bash(pnpm --filter @noisefloor/shared typecheck)",
+      "Bash(pnpm --filter @noisefloor/shared build)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5173/dev/gallery)",
+      "Bash(node screenshot-gallery.mjs)",
+      "Bash(taskkill //F //PID 175064)"
     ],
     "additionalDirectories": [
       "\\tmp"

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@noisefloor/dashboards": "workspace:*",
@@ -22,6 +23,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@playwright/test": "^1.62.1",
     "@vitejs/plugin-react": "^6.0.5",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",

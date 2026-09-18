@@ -6,6 +6,7 @@ export * from "./schemas/rubric.js";
 export * from "./schemas/stage.js";
 export * from "./schemas/case.js";
 export * from "./schemas/gotcha.js";
+export * from "./schemas/annotation.js";
 
 export * from "./gen/rng.js";
 export * from "./gen/diurnal-usage.js";
