@@ -29,7 +29,10 @@
       "Bash(node screenshot-landing.mjs)",
       "Bash(node screenshot-viewport.mjs)",
       "Bash(taskkill //F //PID 95360)",
-      "Bash(rm -f /c/dev/noisefloor/scratch-verify-signin.mjs)"
+      "Bash(rm -f /c/dev/noisefloor/scratch-verify-signin.mjs)",
+      "Bash(openspec archive *)",
+      "Bash(VITE_API_URL=https://api-production-153a.up.railway.app pnpm exec vite --port 5173)",
+      "Bash(echo \"started, pid $!\")"
     ],
     "additionalDirectories": [
       "\\tmp"
