@@ -69,6 +69,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@noisefloor/dashboards':
+        specifier: workspace:*
+        version: link:../../packages/dashboards
       '@noisefloor/shared':
         specifier: workspace:*
         version: link:../../packages/shared

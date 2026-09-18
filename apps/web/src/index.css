@@ -1,24 +1,34 @@
 @import "tailwindcss";
 
+/* Tailwind's content scanner only sees apps/web by default — dashboard
+   components live in packages/dashboards and are consumed via the
+   workspace link, so their classes need to be scanned explicitly or
+   anything not already used elsewhere in apps/web silently never
+   generates (e.g. `w-[9px]`, `gap-[3px]` in LinkCapacityChart). */
+@source "../../../packages/dashboards/src";
+
+/* Monochrome site chrome per homepage/DESIGN-NOTES.md — data colours
+   (used/remaining) live inside dashboard components, never in these tokens. */
 :root {
-  --background: #0b0d10;
-  --foreground: #f4f4f5;
-  --muted: #9aa0a6;
-  --border: #22252a;
-  --accent: #4fb0ff;
-  --accent-foreground: #06111c;
+  --paper: #ffffff;
+  --ink: #0a0a0a;
+  --body-grey: #333333;
+  --caption-grey: #555555;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-body: var(--body-grey);
+  --color-muted: var(--caption-grey);
+  --color-border: var(--ink);
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }

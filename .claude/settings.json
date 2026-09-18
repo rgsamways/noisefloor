@@ -20,7 +20,16 @@
       "Bash(nslookup api.noisefloor.ca parking1.whc.ca)",
       "Bash(curl -s --resolve noisefloor.ca:443:76.76.21.21 https://noisefloor.ca/ -o /dev/null -w \"noisefloor.ca -> HTTP %{http_code}\\\\n\" -k)",
       "Bash(curl -s --resolve api.noisefloor.ca:443:69.46.46.9 https://api.noisefloor.ca/health -k -w \"\\\\napi.noisefloor.ca -> HTTP %{http_code}\\\\n\")",
-      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\(j.template\\);console.log\\('---INSTRUCTION---'\\);console.log\\(j.instruction.slice\\(0,500\\)\\)}\\)\")"
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\(j.template\\);console.log\\('---INSTRUCTION---'\\);console.log\\(j.instruction.slice\\(0,500\\)\\)}\\)\")",
+      "Bash(pnpm --filter @noisefloor/dashboards typecheck)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter @noisefloor/dashboards build)",
+      "Bash(pnpm exec *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(node screenshot-landing.mjs)",
+      "Bash(node screenshot-viewport.mjs)",
+      "Bash(taskkill //F //PID 95360)",
+      "Bash(rm -f /c/dev/noisefloor/scratch-verify-signin.mjs)"
     ],
     "additionalDirectories": [
       "\\tmp"

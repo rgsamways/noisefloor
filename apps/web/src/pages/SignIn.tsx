@@ -36,16 +36,16 @@ export function SignIn() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-foreground"
+          className="w-full border border-foreground bg-transparent px-3 py-2 text-foreground"
         />
         <button
           type="submit"
           disabled={status === "sending"}
-          className="w-full rounded-md bg-accent px-3 py-2 font-medium text-accent-foreground disabled:opacity-50"
+          className="w-full bg-foreground px-3 py-2 font-medium text-background disabled:opacity-50"
         >
           {status === "sending" ? "Sending..." : "Send sign-in link"}
         </button>
-        {status === "error" && <p className="text-sm text-red-400">Something went wrong — try again.</p>}
+        {status === "error" && <p className="text-sm text-body">Something went wrong — try again.</p>}
       </form>
     </main>
   );
