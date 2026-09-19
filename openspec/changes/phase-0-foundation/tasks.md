@@ -27,8 +27,8 @@
 
 ## 6. `apps/web` — scaffold and sign-in page
 
-- [ ] 6.1 Scaffold React 19 + Vite 8 + React Router 8 + Tailwind v4 app mirroring `kerfy`'s `apps/dashboard` structure; verify `pnpm --filter @noisefloor/web dev` serves a placeholder page locally
-- [ ] 6.2 Add a sign-in page (email input → calls the API's magic-link request endpoint) and a minimal authenticated "hello" page; verify a full local sign-in round-trip (request link from console log → visit link → land on the authenticated page)
+- [x] 6.1 Scaffold React 19 + Vite 8 + React Router 8 + Tailwind v4 app mirroring `kerfy`'s `apps/dashboard` structure; verify `pnpm --filter @noisefloor/web dev` serves a placeholder page locally
+- [x] 6.2 Add a sign-in page (email input → calls the API's magic-link request endpoint) and a minimal authenticated "hello" page; verify a full local sign-in round-trip (request link from console log → visit link → land on the authenticated page) — verified via a real browser (Playwright + Chrome): found and fixed a relative-`callbackURL` bug in the process (see commit `11c0205`)
 
 ## 7. Deploy — Railway (API + Postgres)
 
@@ -38,10 +38,10 @@
 ## 8. Deploy — Vercel (web) and DNS
 
 - [x] 8.1 Provision a Vercel project for `apps/web`, pointed at the Railway API's temporary domain; verify the deployed web app serves the placeholder/sign-in page on its Vercel-issued temporary domain — deployed (project `web`, root directory `apps/web` for the pnpm workspace), verified via `vercel curl` past deployment protection: serves the correct `noisefloor` page shell. Production alias: `https://web-nine-ochre-28.vercel.app`
-- [ ] 8.2 Point `noisefloor.ca` (apex) at Vercel and `api.noisefloor.ca` at Railway via DNS; verify both resolve and serve correctly — **blocked on Robin's WHC registrar access**; required records added to both platforms and documented, waiting on DNS to actually be set
-- [ ] 8.3 Re-point the web app's API URL and Better Auth's `trustedOrigins`/`BETTER_AUTH_URL` at the final `noisefloor.ca`/`api.noisefloor.ca` domains; verify the cross-subdomain magic-link sign-in flow (spec requirement "session cookie usable across web and API subdomains") works end to end on the real domain, not just the temporary ones
+- [x] 8.2 Point `noisefloor.ca` (apex) at Vercel and `api.noisefloor.ca` at Railway via DNS; verify both resolve and serve correctly — records added by Robin at WHC; propagated cleanly, but Railway's certificate for `api.noisefloor.ca` actually *failed* to issue (`CERTIFICATE_ERROR_TYPE_INTERNAL`, retryable) rather than just being slow — caught via `railway domain status` and fixed with `railway domain certificate retry`
+- [x] 8.3 Re-point the web app's API URL and Better Auth's `trustedOrigins`/`BETTER_AUTH_URL` at the final `noisefloor.ca`/`api.noisefloor.ca` domains; verify the cross-subdomain magic-link sign-in flow (spec requirement "session cookie usable across web and API subdomains") works end to end on the real domain, not just the temporary ones — verified live: `Set-Cookie` now carries `Domain=noisefloor.ca` (previously host-only on the temp domain), confirming `crossSubDomainCookies` activated correctly; CORS preflight confirmed `Access-Control-Allow-Origin: https://noisefloor.ca`; test account cleaned up afterward
 
 ## 9. Phase exit verification
 
-- [ ] 9.1 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` at the repo root; verify all three pass with zero errors
-- [ ] 9.2 Confirm every scenario in `specs/case-content-schema/spec.md`, `specs/series-generators/spec.md`, and `specs/magic-link-auth/spec.md` has a passing corresponding test or manual verification step, per `PROJECT-PLAN.md`'s Phase 0 deliverable
+- [x] 9.1 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` at the repo root; verify all three pass with zero errors — all green (46 tests, includes everything added since Phase 0 by `world-validator` and `real-link-capacity-chart`)
+- [x] 9.2 Confirm every scenario in `specs/case-content-schema/spec.md`, `specs/series-generators/spec.md`, and `specs/magic-link-auth/spec.md` has a passing corresponding test or manual verification step, per `PROJECT-PLAN.md`'s Phase 0 deliverable — confirmed; magic-link-auth's cross-subdomain scenario was the last one outstanding and is now verified live on the real domain (see 8.3)
