@@ -1,19 +1,19 @@
 ## 1. Schema: hybrid rubric
 
-- [ ] 1.1 Add the `hybrid` kind to `RubricSchema` in `packages/shared/src/schemas/rubric.ts`; verify a unit test validates a well-formed hybrid rubric and existing `options`/`freeText` tests still pass
+- [x] 1.1 Add the `hybrid` kind to `RubricSchema` in `packages/shared/src/schemas/rubric.ts`; verify a unit test validates a well-formed hybrid rubric and existing `options`/`freeText` tests still pass
 
 ## 2. Scoring functions (packages/shared)
 
-- [ ] 2.1 Add `packages/shared/src/scoring/score-option.ts`: looks up an `OptionScore` by id; verify a unit test per spec scenario
-- [ ] 2.2 Add `packages/shared/src/scoring/score-free-text.ts`: `mustMention`/`mustNotMention`/`bonus` phrase matching; verify unit tests for missing-required and forbidden-included cases
-- [ ] 2.3 Add `packages/shared/src/scoring/score-hybrid.ts`: dispatches to option or free-text scoring based on the answer's shape; verify a unit test per spec scenario
-- [ ] 2.4 Add `packages/shared/src/scoring/path-score.ts`: sums stage scores plus the revision-bonus heuristic (per `design.md`) across an ordered list of hypothesis-kind commits; verify a unit test proving a revised path outscores an unrevised one at equal per-stage scores
-- [ ] 2.5 Export the scoring module from `packages/shared/src/index.ts`; verify `pnpm --filter @noisefloor/shared typecheck` passes
+- [x] 2.1 Add `packages/shared/src/scoring/score-option.ts`: looks up an `OptionScore` by id; verify a unit test per spec scenario
+- [x] 2.2 Add `packages/shared/src/scoring/score-free-text.ts`: `mustMention`/`mustNotMention`/`bonus` phrase matching; verify unit tests for missing-required and forbidden-included cases
+- [x] 2.3 Add `packages/shared/src/scoring/score-hybrid.ts`: dispatches to option or free-text scoring based on the answer's shape; verify a unit test per spec scenario
+- [x] 2.4 Add `packages/shared/src/scoring/path-score.ts`: sums stage scores plus the revision-bonus heuristic (per `design.md`) across an ordered list of hypothesis-kind commits; verify a unit test proving a revised path outscores an unrevised one at equal per-stage scores
+- [x] 2.5 Export the scoring module from `packages/shared/src/index.ts`; verify `pnpm --filter @noisefloor/shared typecheck` passes
 
 ## 3. Database (apps/api)
 
-- [ ] 3.1 Add `packages/shared`-independent Drizzle tables in `apps/api/src/db/schema.ts`: `attempts` (id, user_id, case_id, case_version, started_at, completed_at, total_score, path_json), `stage_commits` (id, attempt_id, stage_id, committed_at, prompt_kind, answer_json, score, feedback_shown), `gotcha_progress` (user_id, gotcha_id, first_seen_case_id, seen_count), per `NOISEFLOOR-OUTLINE.md` §10; verify `drizzle-kit generate` produces the expected migration
-- [ ] 3.2 Run the migration against the Railway Postgres instance; verify the three tables exist alongside the existing auth tables
+- [x] 3.1 Add `packages/shared`-independent Drizzle tables in `apps/api/src/db/schema.ts`: `attempts` (id, user_id, case_id, case_version, started_at, completed_at, total_score, path_json), `stage_commits` (id, attempt_id, stage_id, committed_at, prompt_kind, answer_json, score, feedback_shown), `gotcha_progress` (user_id, gotcha_id, first_seen_case_id, seen_count), per `NOISEFLOOR-OUTLINE.md` §10; verify `drizzle-kit generate` produces the expected migration
+- [x] 3.2 Run the migration against the Railway Postgres instance; verify the three tables exist alongside the existing auth tables
 
 ## 4. Case-player API (apps/api)
 
@@ -26,11 +26,11 @@
 
 ## 5. Case 001 content (packages/cases)
 
-- [ ] 5.1 Author case 001's `World` in `packages/cases`, matching `NOISEFLOOR-OUTLINE.md` §9's headline values; verify it validates against `CaseSchema` and produces no *hard* tensions from `validateWorld`
-- [ ] 5.2 Author stage 1 ("What does this graph tell you about capacity?" — `crm/LinkCapacityChart` 24h, hybrid rubric) per §9; verify it validates
-- [ ] 5.3 Author stage 4 ("This feels telling." — `crm/LinkCapacityChart` 1y, hybrid rubric scoring the foliage explanation) per §9; verify it validates
-- [ ] 5.4 Author stage 5 ("What do you tell the customer?" — `customerMessage` prompt, freeText rubric) per §9; verify it validates
-- [ ] 5.5 Author the foliage-arc debrief (see `design.md` — resolves only what stages 1/4/5 revealed); verify the full `Case` object validates end to end
+- [x] 5.1 Author case 001's `World` in `packages/cases`, matching `NOISEFLOOR-OUTLINE.md` §9's headline values; verify it validates against `CaseSchema` and produces no *hard* tensions from `validateWorld`
+- [x] 5.2 Author stage 1 ("What does this graph tell you about capacity?" — `crm/LinkCapacityChart` 24h, hybrid rubric) per §9; verify it validates
+- [x] 5.3 Author stage 4 ("This feels telling." — `crm/LinkCapacityChart` 1y, hybrid rubric scoring the foliage explanation) per §9; verify it validates
+- [x] 5.4 Author stage 5 ("What do you tell the customer?" — `customerMessage` prompt, freeText rubric) per §9; verify it validates
+- [x] 5.5 Author the foliage-arc debrief (see `design.md` — resolves only what stages 1/4/5 revealed); verify the full `Case` object validates end to end
 
 ## 6. Page chrome de-duplication (apps/web)
 

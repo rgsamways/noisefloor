@@ -31,6 +31,15 @@ export const RubricSchema = z.discriminatedUnion("kind", [
     kind: z.literal("freeText"),
     criteria: FreeTextRubricSchema,
   }),
+  // For hypothesis-kind prompts, which always allow free text alongside
+  // their options (Prompt's allowFreeText: true) — a trainee can answer
+  // either way, so scoring needs both an option lookup and a free-text
+  // rubric on the same stage, not a forced choice of one rubric shape.
+  z.object({
+    kind: z.literal("hybrid"),
+    scores: z.array(OptionScoreSchema),
+    criteria: FreeTextRubricSchema,
+  }),
   // Pairs with Prompt's findTheFault kind — grading is "did they name (some
   // of) these specific tensions", referencing the world-consistency
   // validator's own rule ids (see validator/types.ts) rather than

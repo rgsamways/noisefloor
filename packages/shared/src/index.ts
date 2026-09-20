@@ -17,3 +17,8 @@ export * from "./gen/pinglog-month.js";
 export * from "./gen/resolve-series-ref.js";
 
 export * from "./validator/index.js";
+
+export * from "./scoring/score-option.js";
+export * from "./scoring/score-free-text.js";
+export * from "./scoring/score-hybrid.js";
+export * from "./scoring/path-score.js";
