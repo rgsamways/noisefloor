@@ -42,7 +42,7 @@ describe("POST /attempts/:id/commit", () => {
       const body = response.json();
       expect(body.score).toBe(2);
       expect(body.feedback).toBeTruthy();
-      expect(body.nextStageId).toBe("s4");
+      expect(body.nextStageId).toBe("s2");
     } finally {
       await cleanup();
     }
@@ -58,6 +58,18 @@ describe("POST /attempts/:id/commit", () => {
         url: `/attempts/${attempt.id}/commit`,
         headers: { cookie },
         payload: { stageId: "s1", answer: { optionId: "s1-capacity-capped" } },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s2", answer: { optionId: "s2-check-history" } },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s3", answer: { optionId: "s3-note-and-monitor" } },
       });
       await app.inject({
         method: "POST",
@@ -81,8 +93,8 @@ describe("POST /attempts/:id/commit", () => {
       expect(body.nextStageId).toBeUndefined();
       expect(body.debriefUnlocked).toBe(true);
       expect(body.debrief.narrative).toBeTruthy();
-      // 2 (s1) + 3 (s4) + 2 (s5, "Covers the key points") + 1 revision bonus = 8
-      expect(body.totalScore).toBe(8);
+      // 2 (s1) + 3 (s2) + 3 (s3) + 3 (s4) + 2 (s5, "Covers the key points") + 1 revision bonus = 14
+      expect(body.totalScore).toBe(14);
     } finally {
       await cleanup();
     }

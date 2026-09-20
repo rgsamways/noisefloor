@@ -34,7 +34,7 @@ describe("GET /cases/:slug", () => {
       const response = await app.inject({ method: "GET", url: "/cases/wet-leaves", headers: { cookie } });
       expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.stageIds).toEqual(["s1", "s4", "s5"]);
+      expect(body.stageIds).toEqual(["s1", "s2", "s3", "s4", "s5"]);
       expect(JSON.stringify(body)).not.toContain("rubric");
       expect(JSON.stringify(body)).not.toContain("reveal");
     } finally {
@@ -84,7 +84,7 @@ describe("GET /cases/:slug/stage/:id", () => {
 
       const response = await app.inject({
         method: "GET",
-        url: `/cases/wet-leaves/stage/s4?attemptId=${attemptId}`,
+        url: `/cases/wet-leaves/stage/s2?attemptId=${attemptId}`,
         headers: { cookie },
       });
       expect(response.statusCode).toBe(403);
@@ -114,7 +114,7 @@ describe("GET /cases/:slug/stage/:id", () => {
 
       const response = await app.inject({
         method: "GET",
-        url: `/cases/wet-leaves/stage/s4?attemptId=${attemptId}`,
+        url: `/cases/wet-leaves/stage/s2?attemptId=${attemptId}`,
         headers: { cookie },
       });
       expect(response.statusCode).toBe(200);

@@ -24,6 +24,9 @@ export const world: World = {
     cpuPct: 20,
     cableSnrDb: 27,
     cableLengthM: 28,
+    mac: "00:15:6D:11:22:33",
+    txPowerDbm: 24,
+    lanSpeedMbps: 1000,
   },
   ap: {
     model: "Sector",
@@ -35,6 +38,9 @@ export const world: World = {
     cableSnrDb: 30,
     cableLengthM: 12,
     gpsSatellites: 9,
+    mac: "00:15:6D:44:55:66",
+    txPowerDbm: 27,
+    lanSpeedMbps: 1000,
   },
   link: {
     distanceM: 402,

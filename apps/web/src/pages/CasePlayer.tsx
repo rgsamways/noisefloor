@@ -1,4 +1,4 @@
-import { LinkCapacityChart } from "@noisefloor/dashboards";
+import { DeviceDetails, LinkCapacityChart, LinkHeader, RateBar, SignalPanel } from "@noisefloor/dashboards";
 import type { Debrief, Evidence, Opening, Prompt, World } from "@noisefloor/shared";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -31,7 +31,15 @@ function EvidenceView({ evidence, world, caseId }: { evidence: Evidence; world: 
   if (evidence.kind === "dashboard" && evidence.family === "crm" && evidence.view === "LinkCapacityChart") {
     return <LinkCapacityChart world={world} seed={caseId} />;
   }
-  // Only crm/LinkCapacityChart is revealed by any stage in this slice (design.md non-goals).
+  if (evidence.kind === "dashboard" && evidence.family === "radio") {
+    if (evidence.view === "LinkHeader") return <LinkHeader world={world} />;
+    if (evidence.view === "SignalPanel") return <SignalPanel world={world} />;
+    if (evidence.view === "RateBar") return <RateBar world={world} />;
+    if (evidence.view === "DeviceDetails") {
+      const side = evidence.worldSlice === "ap" ? "remote" : "local";
+      return <DeviceDetails world={world} side={side} />;
+    }
+  }
   if (evidence.kind === "customerSays") return <p className="italic text-body">"{evidence.text}"</p>;
   if (evidence.kind === "ticketNote")
     return (

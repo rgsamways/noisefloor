@@ -15,6 +15,13 @@ export const DeviceSchema = z.object({
   // AP-only in practice (see NOISEFLOOR-OUTLINE.md §7 DeviceDetails), but not
   // enforced structurally — a case author leaves it unset on the CPE side.
   gpsSatellites: z.number().int().nonnegative().optional(),
+  // Cosmetic display fields for radio/LinkHeader and radio/DeviceDetails
+  // (NOISEFLOOR-OUTLINE.md §7) — no validator rule or rubric depends on
+  // these, so they're optional rather than retrofitting every existing
+  // World fixture.
+  mac: z.string().optional(),
+  txPowerDbm: z.number().optional(),
+  lanSpeedMbps: z.number().positive().optional(),
 });
 export type Device = z.infer<typeof DeviceSchema>;
 

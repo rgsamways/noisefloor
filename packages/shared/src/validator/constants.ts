@@ -32,6 +32,18 @@ export const MIN_CINR_DB_FOR_RATE: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, number>
   8: 30, // confirmed
 };
 
+// The highest rate a given CINR could sustain, per MIN_CINR_DB_FOR_RATE —
+// the single source of truth for "what should this rate be," shared by
+// checkRateAgainstCinr (above) and radio/RateBar's "expected" marker so the
+// two never independently drift apart on what a CINR value implies.
+export function expectedRateForCinr(cinrDb: number): 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 {
+  const rates = [8, 7, 6, 5, 4, 3, 2, 1] as const;
+  for (const rate of rates) {
+    if (cinrDb >= MIN_CINR_DB_FOR_RATE[rate]) return rate;
+  }
+  return 1;
+}
+
 // Modulation rate -> achievable capacity, expressed as Mbps per MHz of
 // channel width at that rate. Confirmed anchor: rate 6 at 20 MHz lands in
 // the 60-70 Mbps range Robin confirmed, i.e. ~3.25 Mbps/MHz — the other

@@ -9,7 +9,7 @@ The `radio/*` dashboard component family (`NOISEFLOOR-OUTLINE.md` §7) — the r
 
 #### Scenario: LinkHeader renders from World data alone
 - **WHEN** `LinkHeader` is given a `World`
-- **THEN** it SHALL render without requiring any prop beyond that `World` (and an optional `annotations` list, per the existing annotation-mode convention)
+- **THEN** it SHALL render without requiring any prop beyond that `World` — unlike `crm/LinkCapacityChart`, it has no time-series data to anchor an `Annotation` to, so it doesn't accept one
 
 ### Requirement: SignalPanel surfaces chain imbalance without manual subtraction
 `radio/SignalPanel` SHALL render both sides' `signalDbm`, per-chain values, and noise floor, and SHALL compute and display each side's chain delta (`max - min` of that side's `chains` array) rather than requiring the viewer to compute it.

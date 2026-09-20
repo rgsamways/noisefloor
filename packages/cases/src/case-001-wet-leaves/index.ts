@@ -2,20 +2,20 @@ import type { Case } from "@noisefloor/shared";
 import { stages } from "./stages.js";
 import { world } from "./world.js";
 
-// Case 001 — "It's slow when it rains" (NOISEFLOOR-OUTLINE.md §9), scoped to
-// its foliage arc (stages 1/4/5 of the eventual ten) for
-// case-engine-minimal-playable. tags/gotchas/estimatedMinutes are trimmed to
-// only what this slice actually exercises — the full case (chain-imbalance,
-// shaping, router-mode-memory, etc.) lands with stages 2/3/6-10 later.
+// Case 001 — "It's slow when it rains" (NOISEFLOOR-OUTLINE.md §9), now
+// covering stages 1-5 (the foliage arc plus the RF-anomaly detour) of the
+// eventual ten. tags/gotchas/estimatedMinutes are trimmed to only what
+// these five stages exercise — the shaper-collapse subplot (stages 6-10:
+// shaping, units, what-changed, own-your-change) lands later.
 export const caseOne: Case = {
   id: "case-001",
   slug: "wet-leaves",
   title: "It's slow when it rains",
   version: 1,
   difficulty: 2,
-  estimatedMinutes: 10,
-  tags: ["foliage", "seasonal-signal"],
-  gotchas: ["seasonal-signal-is-trees"],
+  estimatedMinutes: 15,
+  tags: ["foliage", "seasonal-signal", "chain-imbalance"],
+  gotchas: ["seasonal-signal-is-trees", "chain-imbalance", "cable-snr-threshold", "router-mode-memory"],
   world,
   opening: {
     ticketText:
