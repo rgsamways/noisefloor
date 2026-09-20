@@ -1,11 +1,11 @@
-import { BottomNav } from "../components/BottomNav";
+import { PageShell } from "../components/PageShell";
 import { authClient } from "../lib/auth-client";
 
 export function Me() {
   const { data: session } = authClient.useSession();
 
   return (
-    <div className="flex min-h-screen flex-col pb-[72px] md:pb-16">
+    <PageShell>
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
         <h1 className="text-2xl font-semibold">noisefloor.ca</h1>
         <p className="text-muted">Signed in as {session?.user.email}</p>
@@ -17,7 +17,6 @@ export function Me() {
           Sign out
         </button>
       </main>
-      <BottomNav />
-    </div>
+    </PageShell>
   );
 }

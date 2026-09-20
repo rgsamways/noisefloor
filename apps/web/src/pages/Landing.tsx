@@ -1,7 +1,7 @@
 import { LinkCapacityChart } from "@noisefloor/dashboards";
 import { Activity, ArrowRight, BookOpen, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router";
-import { BottomNav } from "../components/BottomNav";
+import { PageShell } from "../components/PageShell";
 import { gallerySeed, galleryWorld } from "../lib/gallery-world";
 
 const COLUMNS = [
@@ -27,7 +27,7 @@ const COLUMNS = [
 
 export function Landing() {
   return (
-    <div className="flex min-h-screen flex-col pb-[72px] md:pb-16">
+    <PageShell>
       <header className="flex items-center justify-between px-5 pt-5 md:px-[72px] md:pt-7">
         <div className="flex items-center gap-2 font-mono text-sm font-medium md:gap-2.5 md:text-[15px]">
           <Activity size={16} className="md:hidden" aria-hidden="true" />
@@ -88,8 +88,6 @@ export function Landing() {
           </div>
         ))}
       </section>
-
-      <BottomNav />
-    </div>
+    </PageShell>
   );
 }

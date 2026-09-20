@@ -34,13 +34,13 @@
 
 ## 6. Page chrome de-duplication (apps/web)
 
-- [ ] 6.1 Add `apps/web/src/components/PageShell.tsx` (the `min-h-screen`/padding wrapper + `BottomNav`, extracted from `Landing`/`Me`); verify `Landing` and `Me` render identically after switching to it
+- [x] 6.1 Add `apps/web/src/components/PageShell.tsx` (the `min-h-screen`/padding wrapper + `BottomNav`, extracted from `Landing`/`Me`); verify `Landing` and `Me` render identically after switching to it
 
 ## 7. Case player UI (apps/web)
 
-- [ ] 7.1 Add `/cases` (list) using `PageShell`; verify it renders cases from `GET /cases`
-- [ ] 7.2 Add `/cases/:slug` (player): evidence panel (accumulating, collapsible per outline §8), current prompt, commit action, feedback-then-continue flow; behind `RequireAuth`; verify a full playthrough of stages 1→4→5 end to end against the live API
-- [ ] 7.3 Add the debrief view (shown after the final commit); verify it renders after stage 5
+- [x] 7.1 Add `/cases` (list) using `PageShell`; verify it renders cases from `GET /cases`
+- [x] 7.2 Add `/cases/:slug` (player): evidence panel (accumulating, collapsible per outline §8), current prompt, commit action, feedback-then-continue flow; behind `RequireAuth`; verify a full playthrough of stages 1→4→5 end to end against the live API
+- [x] 7.3 Add the debrief view (shown after the final commit); verify it renders after stage 5
 
 ## 8. Verification
 

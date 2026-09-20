@@ -175,7 +175,9 @@ export async function attemptsRoute(app: FastifyInstance) {
 
     await db.update(attempts).set({ completedAt: new Date(), totalScore }).where(eq(attempts.id, attempt.id));
 
-    return { score, feedback, debriefUnlocked: true, totalScore };
+    // No separate debrief endpoint yet — it's unlocked at this exact moment,
+    // so returning it here avoids adding another gated route for one field.
+    return { score, feedback, debriefUnlocked: true, totalScore, debrief: found.debrief };
   });
 
   app.get<{ Params: { id: string } }>("/attempts/:id", async (request, reply) => {

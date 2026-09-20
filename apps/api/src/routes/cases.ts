@@ -22,6 +22,12 @@ export async function casesRoute(app: FastifyInstance) {
   });
 
   // Opening + ordered stage ids only — no stage content (case-player-api spec).
+  // `world` is included too: it's the instrument reading itself (what a
+  // dashboard component needs to render), not "the answer" — only the
+  // rubric is a protected secret (outline §11). Sending it upfront doesn't
+  // spoil anything the gating on /stage/:id is meant to protect, since that
+  // gating is about which stages/prompts are unlocked, not about hiding
+  // the World's numbers from a trainee who's supposed to read them.
   app.get<{ Params: { slug: string } }>("/cases/:slug", async (request, reply) => {
     const session = await requireSession(request, reply);
     if (!session) return;
@@ -36,6 +42,7 @@ export async function casesRoute(app: FastifyInstance) {
       id: found.id,
       slug: found.slug,
       title: found.title,
+      world: found.world,
       opening: found.opening,
       stageIds: found.stages.map((s) => s.id),
     };
