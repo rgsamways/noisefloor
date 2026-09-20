@@ -139,12 +139,14 @@ export function CasePlayer() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
         <h1 className="text-2xl font-semibold">{shell.title}</h1>
 
-        {!attemptId && (
-          <div className="flex flex-col gap-4 border border-foreground p-4">
-            <p>{shell.opening.ticketText}</p>
-            {shell.opening.evidence.map((e, i) => (
+        {/* The ticket itself — kept visible for the whole investigation, not just the opening screen. */}
+        <div className="flex flex-col gap-4 border border-foreground p-4">
+          <p>{shell.opening.ticketText}</p>
+          {!attemptId &&
+            shell.opening.evidence.map((e, i) => (
               <EvidenceView key={i} evidence={e} world={shell.world} caseId={shell.id} />
             ))}
+          {!attemptId && (
             <button
               type="button"
               onClick={start}
@@ -153,8 +155,8 @@ export function CasePlayer() {
             >
               Start
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Accumulating evidence panel — everything committed so far stays visible, per outline §8. */}
         {history.map((entry, i) => (
