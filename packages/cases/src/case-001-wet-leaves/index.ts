@@ -34,9 +34,26 @@ export const caseOne: Case = {
       "tracks a calendar date instead of a compass heading. The right message to the customer names the " +
       "real cause, doesn't promise a fix that isn't scheduled, and sets up the survey that actually " +
       "addresses it.",
+    // Only the 1y chart gets replayed — the 24h chart's insight is about its
+    // overall shape (a real but unremarkable ceiling), not a single instant,
+    // so there's nothing honest to anchor a callout to on it. "05-28" and
+    // "10-25" are real generated points (foliageYear steps every 3 days from
+    // day 1 — see world.ts's own note on this), not hand-picked calendar
+    // dates that happen to look right.
     annotatedReplays: [
-      { kind: "dashboard", family: "crm", view: "LinkCapacityChart", worldSlice: "24h", annotate: true },
-      { kind: "dashboard", family: "crm", view: "LinkCapacityChart", worldSlice: "1y", annotate: true },
+      {
+        evidence: { kind: "dashboard", family: "crm", view: "LinkCapacityChart", worldSlice: "1y" },
+        annotations: [
+          {
+            target: { series: "signalTrace1y", t: "05-28" },
+            label: "Leaf-out — drops toward −72 dBm.",
+          },
+          {
+            target: { series: "signalTrace1y", t: "10-25" },
+            label: "Leaves drop — recovers.",
+          },
+        ],
+      },
     ],
     gotchaIds: ["seasonal-signal-is-trees"],
   },

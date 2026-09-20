@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AnnotationSchema } from "./annotation.js";
 import { EvidenceSchema } from "./evidence.js";
 import { RubricSchema } from "./rubric.js";
 import { StageSchema } from "./stage.js";
@@ -21,9 +22,19 @@ export const BranchSchema = z.object({
 });
 export type Branch = z.infer<typeof BranchSchema>;
 
+// A piece of evidence re-shown in the debrief, paired with the actual
+// callouts that point at the feature it hinged on — without `annotations`,
+// re-showing the same chart is just a redundant re-render (NOISEFLOOR-OUTLINE.md
+// §7 "Annotation mode" is what makes a replay worth looking at again).
+export const AnnotatedReplaySchema = z.object({
+  evidence: EvidenceSchema,
+  annotations: z.array(AnnotationSchema).default([]),
+});
+export type AnnotatedReplay = z.infer<typeof AnnotatedReplaySchema>;
+
 export const DebriefSchema = z.object({
   narrative: z.string(),
-  annotatedReplays: z.array(EvidenceSchema).default([]),
+  annotatedReplays: z.array(AnnotatedReplaySchema).default([]),
   gotchaIds: z.array(z.string()).default([]),
 });
 export type Debrief = z.infer<typeof DebriefSchema>;

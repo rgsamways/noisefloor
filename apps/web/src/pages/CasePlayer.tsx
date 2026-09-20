@@ -1,5 +1,5 @@
 import { DeviceDetails, LinkCapacityChart, LinkHeader, RateBar, SignalPanel } from "@noisefloor/dashboards";
-import type { Debrief, Evidence, Opening, Prompt, World } from "@noisefloor/shared";
+import type { Annotation, Debrief, Evidence, Opening, Prompt, World } from "@noisefloor/shared";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { PageShell } from "../components/PageShell";
@@ -27,10 +27,20 @@ type CommitResponse =
 
 type StageHistoryEntry = { stage: StageContent; score: number; feedback: string };
 
-function EvidenceView({ evidence, world, caseId }: { evidence: Evidence; world: World; caseId: string }) {
+function EvidenceView({
+  evidence,
+  world,
+  caseId,
+  annotations,
+}: {
+  evidence: Evidence;
+  world: World;
+  caseId: string;
+  annotations?: Annotation[];
+}) {
   if (evidence.kind === "dashboard" && evidence.family === "crm" && evidence.view === "LinkCapacityChart") {
     const initialPeriod = evidence.worldSlice === "1y" ? "1y" : "24h";
-    return <LinkCapacityChart world={world} seed={caseId} initialPeriod={initialPeriod} />;
+    return <LinkCapacityChart world={world} seed={caseId} initialPeriod={initialPeriod} annotations={annotations} />;
   }
   if (evidence.kind === "dashboard" && evidence.family === "radio") {
     if (evidence.view === "LinkHeader") return <LinkHeader world={world} />;
@@ -225,8 +235,8 @@ export function CasePlayer() {
             <h2 className="font-semibold">Debrief</h2>
             <p className="text-body">{debrief.narrative}</p>
             <p className="font-mono text-xs">Total score: {totalScore}</p>
-            {debrief.annotatedReplays.map((e, i) => (
-              <EvidenceView key={i} evidence={e} world={shell.world} caseId={shell.id} />
+            {debrief.annotatedReplays.map((r, i) => (
+              <EvidenceView key={i} evidence={r.evidence} world={shell.world} caseId={shell.id} annotations={r.annotations} />
             ))}
           </div>
         )}
