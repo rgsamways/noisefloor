@@ -34,6 +34,7 @@ export type LinkCapacityChartProps = {
   packageLimitMbps?: number;
   caseLabel?: string;
   prompt?: string;
+  initialPeriod?: Period;
 };
 
 // The real component — see PROJECT-PLAN.md D14/D15 for why a fixed-data
@@ -49,8 +50,9 @@ export function LinkCapacityChart({
   packageLimitMbps,
   caseLabel = "CASE 001 · Link capacity",
   prompt = "What does this tell you about capacity?",
+  initialPeriod = "24h",
 }: LinkCapacityChartProps) {
-  const [period, setPeriod] = useState<Period>("24h");
+  const [period, setPeriod] = useState<Period>(initialPeriod);
 
   const capacityKey = period === "24h" ? "capacityDown24h" : "capacityDown1y";
   const signalKey = period === "24h" ? "signalTrace24h" : "signalTrace1y";

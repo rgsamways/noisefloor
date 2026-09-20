@@ -28,4 +28,4 @@
 ## 5. Verification
 
 - [x] 5.1 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` at the repo root; verify all three pass — also caught and fixed `apps/api`'s existing route tests, which hardcoded the old 3-stage (`s1`→`s4`→`s5`) sequence; they now walk the full 5-stage path and assert the correct revision-bonus total (14)
-- [ ] 5.2 Manually play case 001 end to end (stages 1→2→3→4→5→debrief) against the deployed API, confirming stage 2/3's gating and scoring behave like stages 1/4/5's already-verified path
+- [x] 5.2 Manually play case 001 end to end (stages 1→2→3→4→5→debrief) against the deployed API, confirming stage 2/3's gating and scoring behave like stages 1/4/5's already-verified path — played live via a scripted browser session; total score 2+3+3+3+2+1(revision bonus)=14, matching the automated test's expectation exactly. Found and fixed one more real bug along the way: the debrief's two "annotated replay" evidence entries (24h and 1y) both rendered the same 24h view, since `LinkCapacityChart` had no way to honor an evidence's intended period. Added an `initialPeriod` prop, wired from `evidence.worldSlice`.

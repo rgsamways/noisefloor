@@ -29,7 +29,8 @@ type StageHistoryEntry = { stage: StageContent; score: number; feedback: string 
 
 function EvidenceView({ evidence, world, caseId }: { evidence: Evidence; world: World; caseId: string }) {
   if (evidence.kind === "dashboard" && evidence.family === "crm" && evidence.view === "LinkCapacityChart") {
-    return <LinkCapacityChart world={world} seed={caseId} />;
+    const initialPeriod = evidence.worldSlice === "1y" ? "1y" : "24h";
+    return <LinkCapacityChart world={world} seed={caseId} initialPeriod={initialPeriod} />;
   }
   if (evidence.kind === "dashboard" && evidence.family === "radio") {
     if (evidence.view === "LinkHeader") return <LinkHeader world={world} />;
