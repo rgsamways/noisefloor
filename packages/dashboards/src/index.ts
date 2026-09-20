@@ -3,6 +3,7 @@ export * from "./primitives/StackedBars.js";
 export * from "./primitives/LineTrace.js";
 export * from "./primitives/SegmentBar.js";
 export * from "./primitives/Gauge.js";
+export * from "./primitives/LinearMeter.js";
 export * from "./radio/LinkHeader.js";
 export * from "./radio/SignalPanel.js";
 export * from "./radio/RateBar.js";

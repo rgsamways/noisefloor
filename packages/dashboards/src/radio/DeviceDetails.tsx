@@ -1,4 +1,5 @@
 import type { World } from "@noisefloor/shared";
+import { LinearMeter } from "../primitives/LinearMeter.js";
 
 export type DeviceDetailsProps = {
   world: World;
@@ -10,12 +11,16 @@ export type DeviceDetailsProps = {
 // this lives here rather than in validator/constants.ts. Interpolated, not
 // independently confirmed against a real vendor spec.
 const CABLE_SNR_RED_BELOW_DB = 30;
+const CABLE_SNR_METER_MAX_DB = 40;
+const CINR_METER_MAX_DB = 35;
 
 // Renders NOISEFLOOR-OUTLINE.md §7's radio/DeviceDetails: device
 // mode/firmware/uptime/memory/CPU, wireless (CINR/distance/noise floor),
 // and ethernet (cable SNR — flagged red below vendor threshold per the
 // cable-snr-threshold gotcha — cable length, LAN speed if set). GPS only
 // renders when the device reports satellites (AP-only in practice).
+// Rounded/shadowed card and the CINR/cable-SNR LinearMeters are the
+// dashboard-visual-richness carve-out in homepage/DESIGN-NOTES.md.
 export function DeviceDetails({ world, side }: DeviceDetailsProps) {
   const device = side === "local" ? world.cpe : world.ap;
   const cinrDb = side === "local" ? world.link.cinrLocalDb : world.link.cinrRemoteDb;
@@ -23,7 +28,7 @@ export function DeviceDetails({ world, side }: DeviceDetailsProps) {
   const cableSnrIsRed = device.cableSnrDb < CABLE_SNR_RED_BELOW_DB;
 
   return (
-    <div className="flex flex-col gap-3 border border-foreground p-5 pb-4 font-mono text-xs">
+    <div className="flex flex-col gap-3 rounded-lg border border-foreground p-5 pb-4 font-mono text-xs shadow-sm">
       <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">{device.model}</span>
         <span className="text-muted">{side === "local" ? "Local (CPE)" : "Remote (AP)"}</span>
@@ -37,21 +42,25 @@ export function DeviceDetails({ world, side }: DeviceDetailsProps) {
         <span>CPU: {device.cpuPct}%</span>
       </div>
 
-      <div className="border-t border-foreground pt-2">
-        <div className="mb-1 text-muted">Wireless</div>
+      <div className="flex flex-col gap-2 border-t border-foreground pt-2">
+        <div className="text-muted">Wireless</div>
+        <LinearMeter value={cinrDb} min={0} max={CINR_METER_MAX_DB} label="CINR (dB)" color="#3b78c4" />
         <div className="grid grid-cols-2 gap-2">
-          <span>CINR: {cinrDb} dB</span>
           <span>Distance: {world.link.distanceM} m</span>
           <span>Noise floor: {noiseFloorDbm} dBm</span>
         </div>
       </div>
 
-      <div className="border-t border-foreground pt-2">
-        <div className="mb-1 text-muted">Ethernet</div>
+      <div className="flex flex-col gap-2 border-t border-foreground pt-2">
+        <div className="text-muted">Ethernet</div>
+        <LinearMeter
+          value={device.cableSnrDb}
+          min={0}
+          max={CABLE_SNR_METER_MAX_DB}
+          label={`Cable SNR (dB)${cableSnrIsRed ? " — marginal" : ""}`}
+          color={cableSnrIsRed ? "#e5484d" : "#2bb673"}
+        />
         <div className="grid grid-cols-2 gap-2">
-          <span className={cableSnrIsRed ? "font-semibold text-red-700" : undefined}>
-            Cable SNR: {device.cableSnrDb} dB{cableSnrIsRed ? " (marginal)" : ""}
-          </span>
           <span>Cable length: {device.cableLengthM} m</span>
           {device.lanSpeedMbps !== undefined && <span>LAN: {device.lanSpeedMbps} Mbps</span>}
         </div>

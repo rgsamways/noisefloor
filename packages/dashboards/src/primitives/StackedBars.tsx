@@ -23,8 +23,14 @@ export function StackedBars({ data, height, maxValue, usedColor, remainingColor 
     <div className="flex w-full items-end gap-[2px]" style={{ height }}>
       {data.map((d, i) => (
         <div key={`${d.t}-${i}`} className="flex min-w-0 flex-1 flex-col justify-end" style={{ height }}>
-          <div style={{ height: Math.max(0, d.remaining * scale), background: remainingColor }} />
-          <div style={{ height: Math.max(0, d.used * scale), background: usedColor }} />
+          <div
+            className={d.remaining > 0 ? "rounded-t-sm" : undefined}
+            style={{ height: Math.max(0, d.remaining * scale), background: remainingColor }}
+          />
+          <div
+            className={d.remaining === 0 ? "rounded-t-sm" : undefined}
+            style={{ height: Math.max(0, d.used * scale), background: usedColor }}
+          />
         </div>
       ))}
     </div>

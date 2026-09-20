@@ -88,7 +88,7 @@ export function LinkCapacityChart({
   const lastLabel = capacityPoints[capacityPoints.length - 1]?.t ?? "";
 
   return (
-    <div className="flex flex-col gap-3 border border-foreground p-5 pb-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-foreground p-5 pb-4 shadow-sm">
       <div className="flex items-baseline justify-between gap-3">
         <span className="font-mono text-xs">
           {caseLabel} · {period === "24h" ? "last 24 h" : "last year"}
@@ -147,7 +147,14 @@ export function LinkCapacityChart({
               remainingColor={REMAINING_COLOR}
             />
           ) : (
-            <LineTrace data={capacityPoints} height={CHART_HEIGHT} minValue={0} maxValue={maxCapacityValue} color={REMAINING_COLOR} />
+            <LineTrace
+              data={capacityPoints}
+              height={CHART_HEIGHT}
+              minValue={0}
+              maxValue={maxCapacityValue}
+              color={REMAINING_COLOR}
+              fill
+            />
           )}
 
           <div
@@ -188,7 +195,7 @@ export function LinkCapacityChart({
       <div className="border-t border-foreground pt-2">
         <div className="mb-1 font-mono text-[11px] text-muted">Signal</div>
         <div className="relative" style={{ height: SIGNAL_HEIGHT }}>
-          <LineTrace data={signalPoints} height={SIGNAL_HEIGHT} minValue={minSignal} maxValue={maxSignal} color={SIGNAL_COLOR} />
+          <LineTrace data={signalPoints} height={SIGNAL_HEIGHT} minValue={minSignal} maxValue={maxSignal} color={SIGNAL_COLOR} fill />
           {activeAnnotations.map((a) => {
             const index = signalPoints.findIndex((p) => p.t === a.target.t);
             if (index === -1) return null;
