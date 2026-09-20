@@ -6,6 +6,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm -r run typecheck",
+    "build:packages": "pnpm --filter @noisefloor/shared build && pnpm --filter @noisefloor/cases build",
+    "pretest": "pnpm run build:packages",
     "test": "vitest run",
     "test:watch": "vitest",
     "dev:api": "pnpm --filter @noisefloor/api dev",

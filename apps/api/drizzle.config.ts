@@ -6,6 +6,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/noisefloor_dev",
+    url: process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5439/noisefloor_dev",
   },
 });
