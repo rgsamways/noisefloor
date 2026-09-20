@@ -1,6 +1,8 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import { attemptsRoute } from "./routes/attempts.js";
 import { authRoute } from "./routes/auth.js";
+import { casesRoute } from "./routes/cases.js";
 import { healthRoute } from "./routes/health.js";
 import { env } from "./env.js";
 
@@ -15,5 +17,7 @@ export function buildApp() {
   });
   app.register(healthRoute);
   app.register(authRoute);
+  app.register(casesRoute);
+  app.register(attemptsRoute);
   return app;
 }

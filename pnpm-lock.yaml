@@ -32,6 +32,9 @@ importers:
       '@fastify/cors':
         specifier: ^11.3.0
         version: 11.3.0
+      '@noisefloor/cases':
+        specifier: workspace:*
+        version: link:../../packages/cases
       '@noisefloor/shared':
         specifier: workspace:*
         version: link:../../packages/shared

@@ -17,12 +17,12 @@
 
 ## 4. Case-player API (apps/api)
 
-- [ ] 4.1 Add `GET /cases` (public metadata only) in `apps/api/src/routes/cases.ts`; verify it never includes `world`/`stages`/`debrief`
-- [ ] 4.2 Add `GET /cases/:slug` (opening + ordered stage ids only); verify no stage `reveal`/`prompt`/`rubric` leaks
-- [ ] 4.3 Add `GET /cases/:slug/stage/:id`, gated on a prior commit existing for an authenticated attempt; verify the gating scenario and that `rubric` is never included
-- [ ] 4.4 Add `POST /attempts` in `apps/api/src/routes/attempts.ts`, recording the case's current `version`; verify the version is stored at creation
-- [ ] 4.5 Add `POST /attempts/:id/commit`: scores via `packages/shared`'s scoring functions, persists the commit, returns score/feedback/next-stage-or-debrief-unlocked; verify all three commit scenarios (non-final, final, re-commit-rejected)
-- [ ] 4.6 Add `GET /attempts/:id` (progress: commits so far, running score); verify it reflects committed stages only
+- [x] 4.1 Add `GET /cases` (public metadata only) in `apps/api/src/routes/cases.ts`; verify it never includes `world`/`stages`/`debrief`
+- [x] 4.2 Add `GET /cases/:slug` (opening + ordered stage ids only); verify no stage `reveal`/`prompt`/`rubric` leaks
+- [x] 4.3 Add `GET /cases/:slug/stage/:id`, gated on a prior commit existing for an authenticated attempt; verify the gating scenario and that `rubric` is never included
+- [x] 4.4 Add `POST /attempts` in `apps/api/src/routes/attempts.ts`, recording the case's current `version`; verify the version is stored at creation
+- [x] 4.5 Add `POST /attempts/:id/commit`: scores via `packages/shared`'s scoring functions, persists the commit, returns score/feedback/next-stage-or-debrief-unlocked; verify all three commit scenarios (non-final, final, re-commit-rejected)
+- [x] 4.6 Add `GET /attempts/:id` (progress: commits so far, running score); verify it reflects committed stages only
 
 ## 5. Case 001 content (packages/cases)
 
