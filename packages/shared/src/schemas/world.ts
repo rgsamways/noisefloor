@@ -107,9 +107,33 @@ export const WorldSeriesSchema = z.object({
   capacityDown1y: SeriesRefSchema,
   signalTrace1y: SeriesRefSchema,
   throughputRx1h: SeriesRefSchema,
+  // Parallel to throughputRx1h, for nms/DeviceOverview's RX/TX symmetry
+  // display (case-001-shaper-incident) — optional since not every case's
+  // World needs a transmit-side hourly trace.
+  throughputTx1h: SeriesRefSchema.optional(),
   pinglog: PinglogRefSchema,
 });
 export type WorldSeries = z.infer<typeof WorldSeriesSchema>;
+
+// A point-in-time RTT/loss reading, distinct from any time-series — for
+// crm/RealtimePingModal (case-001-shaper-incident). "Ping looks fine" is
+// meaningful only as a snapshot, not a trend.
+export const RealtimePingSnapshotSchema = z.object({
+  targetLabel: z.string(),
+  rttMs: z.number().nonnegative(),
+  avgRttMs: z.number().nonnegative().optional(),
+  lossPct: z.number().min(0).max(100),
+});
+export type RealtimePingSnapshot = z.infer<typeof RealtimePingSnapshotSchema>;
+
+// For nms/DeviceManagePane's backups list (case-001-shaper-incident) —
+// read-only display; the trainee's actual decision happens through the
+// stage's own action prompt, not by interacting with this mock.
+export const DeviceBackupSchema = z.object({
+  label: z.string(),
+  at: z.string(),
+});
+export type DeviceBackup = z.infer<typeof DeviceBackupSchema>;
 
 export const WorldSchema = z.object({
   customer: CustomerSchema,
@@ -120,5 +144,7 @@ export const WorldSchema = z.object({
   series: WorldSeriesSchema,
   stationList: z.array(StationRowSchema),
   events: z.array(WorldEventSchema),
+  realtimePings: z.array(RealtimePingSnapshotSchema).optional(),
+  deviceBackups: z.array(DeviceBackupSchema).optional(),
 });
 export type World = z.infer<typeof WorldSchema>;

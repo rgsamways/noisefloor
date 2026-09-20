@@ -1,11 +1,10 @@
 import type { Stage } from "@noisefloor/shared";
 
-// Stages 1-5 of case 001 — the foliage arc plus the RF-anomaly detour
-// (stages 2/3), per NOISEFLOOR-OUTLINE.md §9. Stages 6-10 (the separate
-// shaper-collapse subplot) stay deferred — see
-// openspec/changes/radio-family-case-001-stages-2-3's design.md. Ids use
-// their eventual final numbering so inserting 6-10 later doesn't require
-// renumbering anything already played.
+// All 10 stages of case 001, per NOISEFLOOR-OUTLINE.md §9: the foliage arc
+// (1, 4, 5), the RF-anomaly detour (2, 3), and the shaper-collapse incident
+// (6-10) — see openspec/changes/case-001-shaper-incident's design.md for
+// why world.events only models two of the incident's five outline-listed
+// events.
 //
 // Hypothesis-stage option ids are prefixed per stage (s1-*, s4-*) rather
 // than reused a/b/c/d: calculatePathScore's revision-bonus heuristic
@@ -224,4 +223,194 @@ const stage5: Stage = {
   },
 };
 
-export const stages: Stage[] = [stage1, stage2, stage3, stage4, stage5];
+const stage6: Stage = {
+  id: "s6",
+  title: "You changed the plan.",
+  reveal: [
+    {
+      kind: "ticketNote",
+      author: "T1 — J. Ahmed",
+      text: "Cleaned up shaper profiles across the sector this morning, nothing that should affect anyone.",
+      at: "11:52",
+    },
+    { kind: "colleagueSays", role: "T1", text: "I tried pulling up her session twice, it keeps timing out." },
+    { kind: "colleagueSays", role: "field", text: "Truck's on another job, can't get out there till tomorrow." },
+    { kind: "colleagueSays", role: "T2", text: "Radio side looks the same as it did last week. Nothing obviously wrong." },
+  ],
+  prompt: {
+    kind: "hypothesis",
+    allowFreeText: true,
+    options: [
+      { id: "s6-blown-hardware", label: "Blown horn / hardware failure" },
+      { id: "s6-shaper-misconfigured", label: "Shaper misconfigured" },
+      { id: "s6-memory", label: "CPE memory issue" },
+      { id: "s6-ap-problem", label: "Problem with the AP" },
+    ],
+  },
+  rubric: {
+    kind: "hybrid",
+    scores: [
+      {
+        optionId: "s6-blown-hardware",
+        score: 0,
+        feedback: "Hardware doesn't wait for someone to touch a config page — this started right when a change was made.",
+      },
+      {
+        optionId: "s6-shaper-misconfigured",
+        score: 3,
+        feedback: "Right track — a shaper change lines up exactly with when this started.",
+      },
+      {
+        optionId: "s6-memory",
+        score: 1,
+        feedback: "Worth checking, but the timing points at a specific change, not a slow resource leak.",
+      },
+      { optionId: "s6-ap-problem", score: 0, feedback: "Nothing here points at the AP side specifically." },
+    ],
+    criteria: {
+      mustMention: ["change", "shaper"],
+      mustNotMention: [],
+      bonus: ["when"],
+    },
+  },
+  feedback: {
+    text: "Nobody's account plan changed today, but a shaper profile did — right around when the ticket started. That's the thread to pull, not another truck roll.",
+  },
+};
+
+const stage7: Stage = {
+  id: "s7",
+  title: "Is she online?",
+  reveal: [
+    { kind: "dashboard", family: "crm", view: "RealtimePingModal", worldSlice: "M. Ferrier" },
+    { kind: "dashboard", family: "crm", view: "RealtimePingModal", worldSlice: "Lakeside Inn" },
+  ],
+  prompt: {
+    kind: "whatChanged",
+    freeText: true,
+  },
+  rubric: {
+    kind: "freeText",
+    criteria: {
+      mustMention: ["shaper"],
+      mustNotMention: [],
+      bonus: ["ping", "throughput"],
+    },
+  },
+  feedback: {
+    text: "Ping passing clean proves the path is up, not that it's fast — ICMP rides along fine even when a shaper's throttled everything else to a trickle. The only real change on record is the shaper edit at 11:52.",
+  },
+};
+
+const stage8: Stage = {
+  id: "s8",
+  title: "I haven't done anything but I see traffic.",
+  reveal: [{ kind: "dashboard", family: "nms", view: "DeviceOverview" }],
+  prompt: {
+    kind: "hypothesis",
+    allowFreeText: true,
+    options: [
+      { id: "s8-real-usage", label: "That's real customer traffic" },
+      { id: "s8-management-chatter", label: "That's just management/keepalive chatter" },
+      { id: "s8-nms-bug", label: "The NMS graph itself is wrong" },
+    ],
+  },
+  rubric: {
+    kind: "hybrid",
+    scores: [
+      {
+        optionId: "s8-real-usage",
+        score: 0,
+        feedback: "Real traffic isn't this perfectly symmetric — matching RX and TX is a management-channel signature, not a customer session.",
+      },
+      {
+        optionId: "s8-management-chatter",
+        score: 3,
+        feedback:
+          "Exactly — RX and TX collapsing to the same trickle at the same time is what a starved management channel looks like, not a customer using the link.",
+      },
+      {
+        optionId: "s8-nms-bug",
+        score: 1,
+        feedback: "Possible in general, but this specific pattern (symmetric, timed with the shaper change) has a simpler explanation.",
+      },
+    ],
+    criteria: {
+      mustMention: ["symmetric", "management"],
+      mustNotMention: [],
+      bonus: ["kbit", "kbps"],
+    },
+  },
+  feedback: {
+    text: "Note the units too — that's kbit/s on this graph, not Mbps. Fifty of those is a trickle, not a typo.",
+  },
+};
+
+const stage9: Stage = {
+  id: "s9",
+  title: "Get it back.",
+  reveal: [{ kind: "dashboard", family: "nms", view: "DeviceManagePane" }],
+  prompt: {
+    kind: "action",
+    options: [
+      { id: "s9-web-ui", label: "Keep trying the web UI" },
+      { id: "s9-restore-backup", label: "Restore the pre-incident backup" },
+      { id: "s9-ssh-disable", label: "SSH in and disable the shaper directly" },
+      { id: "s9-power-cycle", label: "Power-cycle the CPE again" },
+      { id: "s9-escalate", label: "Escalate to T2 with the exact change made" },
+    ],
+  },
+  rubric: {
+    kind: "options",
+    scores: [
+      {
+        optionId: "s9-web-ui",
+        score: 0,
+        feedback: "The web UI needs more than 50 kbit/s to load reliably — that's the wrong tool once the shaper's already choked the link.",
+      },
+      { optionId: "s9-restore-backup", score: 3, feedback: "This undoes the exact change that caused it — a clean fix." },
+      {
+        optionId: "s9-ssh-disable",
+        score: 3,
+        feedback:
+          "Also a clean fix — SSH doesn't need the bandwidth a web session does, and disabling the shaper directly resolves the same root cause.",
+      },
+      {
+        optionId: "s9-power-cycle",
+        score: 0,
+        feedback: "Already tried, per the notes — and a reboot won't undo a saved config change anyway.",
+      },
+      {
+        optionId: "s9-escalate",
+        score: 2,
+        feedback: "Reasonable — naming the exact change when escalating is what actually gets it fixed fast, even if you're not the one making the fix.",
+      },
+    ],
+  },
+  feedback: {
+    text: "Either a backup restore or an SSH session gets past the same wall a browser can't cross at 50 kbit/s — and naming the exact change (a shaper edit at 11:52) is what makes any of these actually fast.",
+  },
+};
+
+const stage10: Stage = {
+  id: "s10",
+  title: "It's back.",
+  reveal: [{ kind: "dashboard", family: "nms", view: "ApStationList" }],
+  prompt: {
+    kind: "ticketNote",
+    freeText: true,
+  },
+  rubric: {
+    kind: "freeText",
+    criteria: {
+      mustMention: ["shaper"],
+      mustNotMention: [],
+      bonus: ["kbit", "survey"],
+    },
+  },
+  feedback: {
+    text: "Good close — names the actual cause (a kbit/s shaper edit, not a hardware fault), the window it was down, and who fixed it, and carries the foliage survey forward rather than treating this as a separate, finished ticket.",
+  },
+};
+
+export const stages: Stage[] = [stage1, stage2, stage3, stage4, stage5, stage6, stage7, stage8, stage9, stage10];

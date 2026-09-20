@@ -1,4 +1,14 @@
-import { DeviceDetails, LinkCapacityChart, LinkHeader, RateBar, SignalPanel } from "@noisefloor/dashboards";
+import {
+  ApStationList,
+  DeviceDetails,
+  DeviceManagePane,
+  DeviceOverview,
+  LinkCapacityChart,
+  LinkHeader,
+  RateBar,
+  RealtimePingModal,
+  SignalPanel,
+} from "@noisefloor/dashboards";
 import type { Annotation, Debrief, Evidence, Opening, Prompt, World } from "@noisefloor/shared";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -50,6 +60,14 @@ function EvidenceView({
       const side = evidence.worldSlice === "ap" ? "remote" : "local";
       return <DeviceDetails world={world} side={side} />;
     }
+  }
+  if (evidence.kind === "dashboard" && evidence.family === "crm" && evidence.view === "RealtimePingModal") {
+    return <RealtimePingModal world={world} targetLabel={evidence.worldSlice ?? ""} />;
+  }
+  if (evidence.kind === "dashboard" && evidence.family === "nms") {
+    if (evidence.view === "DeviceOverview") return <DeviceOverview world={world} seed={caseId} />;
+    if (evidence.view === "DeviceManagePane") return <DeviceManagePane world={world} />;
+    if (evidence.view === "ApStationList") return <ApStationList world={world} />;
   }
   if (evidence.kind === "customerSays") return <p className="italic text-body">"{evidence.text}"</p>;
   if (evidence.kind === "ticketNote")

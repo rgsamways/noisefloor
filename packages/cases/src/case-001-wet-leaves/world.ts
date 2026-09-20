@@ -1,17 +1,13 @@
 import type { World } from "@noisefloor/shared";
 
-// Case 001's World — headline values from NOISEFLOOR-OUTLINE.md §9.
-//
-// Scoped for this minimal-playable slice (stages 1/4/5, the foliage arc
-// only — see openspec/changes/case-engine-minimal-playable/design.md):
-// `events` is empty and `throughputRx1h` holds a steady, uneventful series
-// rather than the real case's shaper-collapse subplot. That subplot needs
-// its own WorldEvents (config change, reconnect, restore, reboot), and
-// world-validator's event-coherence rule requires every event to have a
-// visible series effect — three of those five events (reconnect/restore/
-// reboot) don't have one modeled yet. Authoring them now, without stages
-// 6-10 to use them, would either fail validation honestly or need a fake
-// placeholder effect. Add them together with those stages in a later phase.
+// Case 001's World — headline values from NOISEFLOOR-OUTLINE.md §9. Covers
+// both the foliage arc (stages 1-5) and the shaper-collapse incident
+// (stages 6-10) — see openspec/changes/case-001-shaper-incident/design.md
+// for why `events` has only two entries rather than outline §9's full
+// five: the other three (11:21 reconnect, 12:34 restore, 12:35 reboot)
+// fall outside `shaperCollapse`'s one-hour window and have no real,
+// non-fabricated series effect to check — they're conveyed as narrative
+// evidence in stages 6/9/10 instead of formal WorldEvents.
 export const world: World = {
   customer: { displayName: "M. Ferrier", accountRef: "SYN-00417", plan: { down: 35, up: 10 } },
   site: { apName: "SEC-A", sectorName: "RIDGE-5.8-A", channelMHz: 5710, widthMHz: 20 },
@@ -79,11 +75,35 @@ export const world: World = {
       gen: "foliageYear",
       params: { leafOnDbm: -72, leafOffDbm: -65, leafOnDate: "05-24", leafOffDate: "10-20", growthDbPerYear: 3 },
     },
-    // Steady/uneventful in this slice — see the module comment above.
-    throughputRx1h: { gen: "noisyCeiling", params: { base: 30000, jitter: 2000 } },
+    // Real shaper-collapse subplot (outline §9): a normal ~30 Mbps baseline
+    // until 11:56, then a trickle. throughputTx1h uses the same params
+    // deliberately — RX and TX collapsing to the same value at the same
+    // time is the "symmetric traffic = management chatter, not a real
+    // session" tell stage 8's rubric hinges on.
+    throughputRx1h: { gen: "shaperCollapse", params: { at: "11:56", toKbps: 50 } },
+    throughputTx1h: { gen: "shaperCollapse", params: { at: "11:56", toKbps: 50 } },
     pinglog: { gen: "pinglogMonth", params: { baseLossPct: 1 } },
   },
   stationList: [
+    {
+      // Post-fix values (stage 10's "It's back." reveal) — this World is a
+      // single static snapshot, and only stage 10 reveals this component,
+      // so it always reflects the resolved state, not the mid-incident one.
+      mac: "00:15:6D:11:22:33",
+      model: "PowerBeam-class",
+      name: "M. Ferrier",
+      signalDbm: -69,
+      remoteSignalDbm: -66,
+      capacityDownMbps: 66,
+      capacityUpMbps: 93,
+      airtimeTxPct: 11,
+      airtimeRxPct: 9,
+      connectionTime: "00:38",
+      lastIp: "203.0.113.87",
+      throughputRxMbps: 30,
+      throughputTxMbps: 6,
+      isCurrentCustomer: true,
+    },
     {
       mac: "00:15:6D:AA:BB:CC",
       model: "NanoStation-class",
@@ -100,5 +120,22 @@ export const world: World = {
       throughputTxMbps: 1.1,
     },
   ],
-  events: [],
+  // Only the two events with a real, checkable effect in throughputRx1h/
+  // throughputTx1h — see the module comment above.
+  events: [
+    { at: "11:52", label: "Config change on CPE by T1 (shaper)", actor: "T1" },
+    { at: "11:56", label: "Throughput collapse" },
+  ],
+  // Stage 7's "ping looks fine" red herring (NOISEFLOOR-OUTLINE.md §9) —
+  // ICMP passes through a starved shaper; ping is not a throughput test.
+  realtimePings: [
+    { targetLabel: "M. Ferrier", rttMs: 65, lossPct: 1 },
+    { targetLabel: "Lakeside Inn", rttMs: 69, lossPct: 3 },
+  ],
+  // Stage 9's collapsed Backups section — a pre-incident backup exists to
+  // restore, which is one of the correct actions for that stage's rubric.
+  deviceBackups: [
+    { label: "Pre-maintenance config backup", at: "11:40" },
+    { label: "Nightly config backup", at: "02:00" },
+  ],
 };

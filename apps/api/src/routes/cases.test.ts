@@ -34,7 +34,7 @@ describe("GET /cases/:slug", () => {
       const response = await app.inject({ method: "GET", url: "/cases/wet-leaves", headers: { cookie } });
       expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.stageIds).toEqual(["s1", "s2", "s3", "s4", "s5"]);
+      expect(body.stageIds).toEqual(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10"]);
       expect(JSON.stringify(body)).not.toContain("rubric");
       expect(JSON.stringify(body)).not.toContain("reveal");
     } finally {

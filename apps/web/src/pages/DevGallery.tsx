@@ -1,4 +1,14 @@
-import { DeviceDetails, LinkCapacityChart, LinkHeader, RateBar, SignalPanel } from "@noisefloor/dashboards";
+import {
+  ApStationList,
+  DeviceDetails,
+  DeviceManagePane,
+  DeviceOverview,
+  LinkCapacityChart,
+  LinkHeader,
+  RateBar,
+  RealtimePingModal,
+  SignalPanel,
+} from "@noisefloor/dashboards";
 import { galleryAnnotations, gallerySeed, galleryWorld } from "../lib/gallery-world";
 
 export function DevGallery() {
@@ -37,6 +47,34 @@ export function DevGallery() {
         <h2 className="font-mono text-sm text-muted">radio/DeviceDetails</h2>
         <div className="max-w-2xl">
           <DeviceDetails world={galleryWorld} side="local" />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-mono text-sm text-muted">crm/RealtimePingModal</h2>
+        <div className="max-w-2xl">
+          <RealtimePingModal world={galleryWorld} targetLabel="M. Ferrier" />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-mono text-sm text-muted">nms/DeviceOverview</h2>
+        <div className="max-w-2xl">
+          <DeviceOverview world={galleryWorld} seed={gallerySeed} />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-mono text-sm text-muted">nms/DeviceManagePane</h2>
+        <div className="max-w-2xl">
+          <DeviceManagePane world={galleryWorld} />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-mono text-sm text-muted">nms/ApStationList</h2>
+        <div className="max-w-2xl">
+          <ApStationList world={galleryWorld} />
         </div>
       </section>
     </main>

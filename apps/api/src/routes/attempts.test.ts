@@ -77,7 +77,7 @@ describe("POST /attempts/:id/commit", () => {
         headers: { cookie },
         payload: { stageId: "s4", answer: { optionId: "s4-foliage" } },
       });
-      const response = await app.inject({
+      await app.inject({
         method: "POST",
         url: `/attempts/${attempt.id}/commit`,
         headers: { cookie },
@@ -88,13 +88,47 @@ describe("POST /attempts/:id/commit", () => {
           },
         },
       });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s6", answer: { optionId: "s6-shaper-misconfigured" } },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s7", answer: { text: "The only real change was the shaper edit at 11:52 — ping doesn't reflect throughput." } },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s8", answer: { optionId: "s8-management-chatter" } },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: { stageId: "s9", answer: { optionId: "s9-restore-backup" } },
+      });
+      const response = await app.inject({
+        method: "POST",
+        url: `/attempts/${attempt.id}/commit`,
+        headers: { cookie },
+        payload: {
+          stageId: "s10",
+          answer: { text: "Root cause was a shaper edit (kbit/s, not Mbps); restored from backup." },
+        },
+      });
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body.nextStageId).toBeUndefined();
       expect(body.debriefUnlocked).toBe(true);
       expect(body.debrief.narrative).toBeTruthy();
-      // 2 (s1) + 3 (s2) + 3 (s3) + 3 (s4) + 2 (s5, "Covers the key points") + 1 revision bonus = 14
-      expect(body.totalScore).toBe(14);
+      // 2(s1) + 3(s2) + 3(s3) + 3(s4) + 2(s5) + 3(s6) + 3(s7) + 3(s8) + 3(s9) + 3(s10) = 28
+      // + 1 revision bonus (s1 -> s4 hypothesis commits differ) = 29
+      expect(body.totalScore).toBe(29);
     } finally {
       await cleanup();
     }
