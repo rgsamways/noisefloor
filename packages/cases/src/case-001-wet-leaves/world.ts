@@ -129,8 +129,14 @@ export const world: World = {
   // Stage 7's "ping looks fine" red herring (NOISEFLOOR-OUTLINE.md §9) —
   // ICMP passes through a starved shaper; ping is not a throughput test.
   realtimePings: [
-    { targetLabel: "M. Ferrier", rttMs: 65, lossPct: 1 },
-    { targetLabel: "Lakeside Inn", rttMs: 69, lossPct: 3 },
+    {
+      targetLabel: "M. Ferrier",
+      samples: [64, 66, 63, 65, 67, 64, 65, 66, 63, 65, null, 64, 66, 65, 64, 67, 63, 65, 66, 64],
+    },
+    {
+      targetLabel: "Lakeside Inn",
+      samples: [68, 70, 69, 71, 68, null, 70, 69, 68, 71, 69, 70, 68, 69, null, 70, 69, 71, 68, 69],
+    },
   ],
   // Stage 9's collapsed Backups section — a pre-incident backup exists to
   // restore, which is one of the correct actions for that stage's rubric.

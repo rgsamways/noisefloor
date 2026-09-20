@@ -116,8 +116,14 @@ export const galleryWorld: World = {
     { at: "11:52", label: "config change on CPE by T1 (shaper)" },
   ],
   realtimePings: [
-    { targetLabel: "M. Ferrier", rttMs: 65, lossPct: 1 },
-    { targetLabel: "Lakeside Inn", rttMs: 69, lossPct: 3 },
+    {
+      targetLabel: "M. Ferrier",
+      samples: [64, 66, 63, 65, 67, 64, 65, 66, 63, 65, null, 64, 66, 65, 64, 67, 63, 65, 66, 64],
+    },
+    {
+      targetLabel: "Lakeside Inn",
+      samples: [68, 70, 69, 71, 68, null, 70, 69, 68, 71, 69, 70, 68, 69, null, 70, 69, 71, 68, 69],
+    },
   ],
   deviceBackups: [
     { label: "Pre-maintenance config backup", at: "11:40" },

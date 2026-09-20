@@ -115,14 +115,15 @@ export const WorldSeriesSchema = z.object({
 });
 export type WorldSeries = z.infer<typeof WorldSeriesSchema>;
 
-// A point-in-time RTT/loss reading, distinct from any time-series — for
-// crm/RealtimePingModal (case-001-shaper-incident). "Ping looks fine" is
-// meaningful only as a snapshot, not a trend.
+// A short burst of individual ping samples, distinct from any longer-run
+// time-series — for crm/RealtimePingModal (case-001-shaper-incident),
+// modeling the real "fire off a dozen pings and watch the bars" tool this
+// component is based on. `null` marks a dropped packet. avg RTT and loss %
+// are computed from `samples` by the component, not stored separately, so
+// the displayed stats can't drift from what the bars actually show.
 export const RealtimePingSnapshotSchema = z.object({
   targetLabel: z.string(),
-  rttMs: z.number().nonnegative(),
-  avgRttMs: z.number().nonnegative().optional(),
-  lossPct: z.number().min(0).max(100),
+  samples: z.array(z.number().nonnegative().nullable()).min(1),
 });
 export type RealtimePingSnapshot = z.infer<typeof RealtimePingSnapshotSchema>;
 

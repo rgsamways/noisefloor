@@ -36,7 +36,7 @@ describe("WorldSchema", () => {
     const world = {
       ...base,
       series: { ...base.series, throughputTx1h: [{ t: "00:00", v: 30000 }] },
-      realtimePings: [{ targetLabel: "M. Ferrier", rttMs: 65, lossPct: 1 }],
+      realtimePings: [{ targetLabel: "M. Ferrier", samples: [64, 66, null, 65] }],
       deviceBackups: [{ label: "Nightly config backup", at: "2026-09-19T02:00:00Z" }],
     };
     expect(() => WorldSchema.parse(world)).not.toThrow();
