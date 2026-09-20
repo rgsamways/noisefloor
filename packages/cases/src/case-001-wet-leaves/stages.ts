@@ -65,7 +65,7 @@ const stage1: Stage = {
 
 const stage2: Stage = {
   id: "s2",
-  title: "Why is the ceiling where it is?",
+  title: "What do you check next?",
   reveal: [
     { kind: "dashboard", family: "radio", view: "LinkHeader" },
     { kind: "dashboard", family: "radio", view: "SignalPanel" },
