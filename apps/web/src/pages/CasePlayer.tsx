@@ -186,19 +186,28 @@ export function CasePlayer() {
           )}
         </div>
 
-        {/* Accumulating evidence panel — everything committed so far stays visible, per outline §8. */}
+        {/* Accumulating story panel — per outline §8, everything committed so far stays
+            visible. Score/feedback (the "what this told us" synthesis) stays visible
+            unconditionally so the running story doesn't disappear behind a click as more
+            stages pile up; only the bulkier raw evidence collapses. */}
         {history.map((entry, i) => (
-          <details key={entry.stage.id} open={i === history.length - 1} className="border border-foreground p-4">
-            <summary className="cursor-pointer font-semibold">{entry.stage.title}</summary>
-            <div className="mt-3 flex flex-col gap-3">
-              {entry.stage.reveal.map((e, j) => (
-                <EvidenceView key={j} evidence={e} world={shell.world} caseId={shell.id} />
-              ))}
-              <p className="font-mono text-xs">
-                Score: {entry.score} — {entry.feedback}
-              </p>
+          <div key={entry.stage.id} className="flex flex-col gap-2 border border-foreground p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-semibold">{entry.stage.title}</span>
+              <span className="font-mono text-xs text-muted">Score: {entry.score}</span>
             </div>
-          </details>
+            <p className="text-sm text-body">{entry.feedback}</p>
+            {entry.stage.reveal.length > 0 && (
+              <details open={i === history.length - 1}>
+                <summary className="cursor-pointer font-mono text-xs text-muted">Evidence</summary>
+                <div className="mt-3 flex flex-col gap-3">
+                  {entry.stage.reveal.map((e, j) => (
+                    <EvidenceView key={j} evidence={e} world={shell.world} caseId={shell.id} />
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
         ))}
 
         {currentStage && (

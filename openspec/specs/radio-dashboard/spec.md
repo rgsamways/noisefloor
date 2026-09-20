@@ -6,7 +6,7 @@ The `radio/*` dashboard component family (`NOISEFLOOR-OUTLINE.md` §7) — the r
 ## Requirements
 
 ### Requirement: LinkHeader renders both link endpoints from World alone
-`radio/LinkHeader` SHALL render the CPE ("local") and AP ("remote") devices' model, mode, and any set `mac`/`txPowerDbm`, plus the link's `distanceM`, `linkPotentialPct` (as a `Gauge`), `airtimeTxPct`/`airtimeRxPct`, and `capacityDownMbps`/`capacityUpMbps`, using only a `World` (or a slice of one) as input. Its device cards and gauge may use rounded corners and a shadow, per the dashboard-component visual carve-out in `homepage/DESIGN-NOTES.md`.
+`radio/LinkHeader` SHALL render the CPE ("local") and AP ("remote") sides as cards headlined by `customer.displayName` and `site.sectorName` respectively (device model as a secondary line), plus each device's mode and any set `mac`/`txPowerDbm`, plus the link's `distanceM`, `linkPotentialPct` (as a `Gauge`), `airtimeTxPct`/`airtimeRxPct`, and `capacityDownMbps`/`capacityUpMbps`, using only a `World` (or a slice of one) as input. Its device cards and gauge may use rounded corners and a shadow, per the dashboard-component visual carve-out in `homepage/DESIGN-NOTES.md`.
 
 #### Scenario: LinkHeader renders from World data alone
 - **WHEN** `LinkHeader` is given a `World`
@@ -27,7 +27,7 @@ The `radio/*` dashboard component family (`NOISEFLOOR-OUTLINE.md` §7) — the r
 - **THEN** the rate it marks as "expected" SHALL equal `expectedRateForCinr` applied to that same CINR value
 
 ### Requirement: DeviceDetails flags cable SNR below a stated vendor threshold
-`radio/DeviceDetails` SHALL render a device's mode, firmware, uptime, memory %, CPU %, wireless fields (CINR as a `LinearMeter`, distance, noise floor), and ethernet fields (cable SNR as a `LinearMeter`, cable length, and `lanSpeedMbps` if set), and SHALL visually distinguish `cableSnrDb` values below its documented red threshold from values at or above it. Its card may use rounded corners and a shadow, per the dashboard-component visual carve-out in `homepage/DESIGN-NOTES.md`.
+`radio/DeviceDetails` SHALL render a device's network mode, firmware, a derived wireless mode ("Station PtMP" for the local/CPE side, "Access Point PtMP" for the remote/AP side), uptime, memory % and CPU % (each as a `LinearMeter`), wireless fields (CINR as a `LinearMeter`, distance, noise floor), and ethernet fields (cable SNR as a `LinearMeter`, cable length, and `lanSpeedMbps` if set), and SHALL visually distinguish `cableSnrDb` values below its documented red threshold from values at or above it. Its card may use rounded corners and a shadow, per the dashboard-component visual carve-out in `homepage/DESIGN-NOTES.md`.
 
 #### Scenario: A cable SNR below the red threshold is visually flagged
 - **WHEN** `DeviceDetails` is given a `cableSnrDb` below its documented threshold

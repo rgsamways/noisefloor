@@ -13,19 +13,27 @@ export type DeviceDetailsProps = {
 const CABLE_SNR_RED_BELOW_DB = 30;
 const CABLE_SNR_METER_MAX_DB = 40;
 const CINR_METER_MAX_DB = 35;
+const MEMORY_WARM_ABOVE_PCT = 70;
 
 // Renders NOISEFLOOR-OUTLINE.md §7's radio/DeviceDetails: device
 // mode/firmware/uptime/memory/CPU, wireless (CINR/distance/noise floor),
 // and ethernet (cable SNR — flagged red below vendor threshold per the
 // cable-snr-threshold gotcha — cable length, LAN speed if set). GPS only
 // renders when the device reports satellites (AP-only in practice).
-// Rounded/shadowed card and the CINR/cable-SNR LinearMeters are the
-// dashboard-visual-richness carve-out in homepage/DESIGN-NOTES.md.
+// Memory/CPU as bars (not flat text), and a separate "wireless mode"
+// (Station/Access Point — derivable from `side`, distinct from the
+// router/bridge "network mode") were both added after comparing directly
+// against a real UISP device panel screenshot Robin shared — this
+// component was missing them entirely, not just under-styled. Rounded/
+// shadowed card is the dashboard-visual-richness carve-out in
+// homepage/DESIGN-NOTES.md.
 export function DeviceDetails({ world, side }: DeviceDetailsProps) {
   const device = side === "local" ? world.cpe : world.ap;
   const cinrDb = side === "local" ? world.link.cinrLocalDb : world.link.cinrRemoteDb;
   const noiseFloorDbm = side === "local" ? world.link.noiseFloorLocalDbm : world.link.noiseFloorRemoteDbm;
   const cableSnrIsRed = device.cableSnrDb < CABLE_SNR_RED_BELOW_DB;
+  const memoryIsWarm = device.memoryPct > MEMORY_WARM_ABOVE_PCT;
+  const wirelessMode = side === "local" ? "Station PtMP" : "Access Point PtMP";
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-foreground p-5 pb-4 font-mono text-xs shadow-sm">
@@ -35,11 +43,21 @@ export function DeviceDetails({ world, side }: DeviceDetailsProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <span>Mode: {device.mode}</span>
+        <span>Network mode: {device.mode}</span>
         <span>Firmware: {device.firmware}</span>
+        <span>Wireless mode: {wirelessMode}</span>
         <span>Uptime: {device.uptimeHours} h</span>
-        <span>Memory: {device.memoryPct}%</span>
-        <span>CPU: {device.cpuPct}%</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <LinearMeter
+          value={device.memoryPct}
+          min={0}
+          max={100}
+          label="Memory"
+          color={memoryIsWarm ? "#e5484d" : "#3b78c4"}
+        />
+        <LinearMeter value={device.cpuPct} min={0} max={100} label="CPU" color="#3b78c4" />
       </div>
 
       <div className="flex flex-col gap-2 border-t border-foreground pt-2">
