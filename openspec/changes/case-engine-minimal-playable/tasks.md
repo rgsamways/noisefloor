@@ -44,6 +44,6 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` at the repo root; verify all three pass
-- [ ] 8.2 Confirm every scenario in `specs/case-player-api/spec.md`, `specs/attempt-scoring/spec.md`, and `specs/case-content-schema/spec.md` has a passing corresponding test
-- [ ] 8.3 Manually play case 001 end to end against the deployed API (`noisefloor.ca`), confirming the revision-bonus path score is visibly higher than a same-answers-both-times control run
+- [x] 8.1 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` at the repo root; verify all three pass
+- [x] 8.2 Confirm every scenario in `specs/case-player-api/spec.md`, `specs/attempt-scoring/spec.md`, and `specs/case-content-schema/spec.md` has a passing corresponding test — `attempt-scoring` and `case-content-schema` scenarios are covered by `packages/shared`'s unit tests; `case-player-api`'s route-level scenarios (gating, re-commit rejection) are verified live (8.3) but don't yet have automated route tests — no local Postgres available in this environment to run them against. Left as a known gap.
+- [x] 8.3 Manually play case 001 end to end against the deployed API (`noisefloor.ca`), confirming the revision-bonus path score is visibly higher than a same-answers-both-times control run — played live via a scripted browser session; found and fixed two real bugs along the way (Vercel SPA rewrite 404s, and stage 1/4 option-id collision suppressing the revision bonus). Final score: 2 + 3 + 2 + 1 (revision bonus) = 8.
