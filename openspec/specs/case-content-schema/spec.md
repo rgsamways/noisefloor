@@ -61,3 +61,10 @@ A `Gotcha` SHALL require `id`, `title`, `oneLiner`, `explanation`, and `cases` (
 #### Scenario: A case's gotcha reference resolves to a real gotcha entry
 - **WHEN** a case lists a gotcha id in its `gotchas` field
 - **THEN** a `Gotcha` record with that id SHALL exist and list the case's id back in its own `cases` field
+
+### Requirement: Rubric supports a hybrid kind for hypothesis stages answerable either way
+`Rubric` SHALL support a `hybrid` kind (`{ scores: OptionScore[], criteria: FreeTextRubric }`) for stages whose prompt accepts either a chosen option or free text — a `hypothesis`-kind prompt's own `allowFreeText: true` means either form can be scored, and neither the existing `options`-only nor `freeText`-only rubric kind can express both.
+
+#### Scenario: A hybrid rubric is valid case content
+- **WHEN** a `Stage`'s `rubric` is `{ kind: "hybrid", scores: [...], criteria: {...} }`
+- **THEN** it SHALL validate successfully against the `Rubric` schema
