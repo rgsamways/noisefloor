@@ -12,6 +12,21 @@ const SIGNAL_HEIGHT = 60;
 
 export type Period = "24h" | "1y";
 
+// Rounds a chart's tick step to a "nice" 1/2/5-times-a-power-of-ten value
+// (the standard axis-labeling trick) so ticks read as 20/40/60 rather than
+// 21.4/42.8/64.2.
+function niceTicks(max: number, tickCount = 5): number[] {
+  if (max <= 0) return [0];
+  const rawStep = max / tickCount;
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const residual = rawStep / magnitude;
+  const niceResidual = residual > 5 ? 10 : residual > 2 ? 5 : residual > 1 ? 2 : 1;
+  const step = niceResidual * magnitude;
+  const ticks: number[] = [];
+  for (let v = 0; v <= max; v += step) ticks.push(Math.round(v));
+  return ticks;
+}
+
 export type LinkCapacityChartProps = {
   world: World;
   seed: string | number;
@@ -58,6 +73,7 @@ export function LinkCapacityChart({
   }, [capacityPoints, usedPoints, period]);
 
   const maxCapacityValue = Math.max(limit, ...capacityPoints.map((p) => p.v), 1) * 1.1;
+  const capacityTicks = useMemo(() => niceTicks(maxCapacityValue), [maxCapacityValue]);
 
   const signalValues = signalPoints.map((p) => p.v);
   const minSignal = Math.min(...signalValues, -100);
@@ -95,29 +111,60 @@ export function LinkCapacityChart({
         </div>
       </div>
 
-      <div className="relative border-b border-foreground" style={{ height: CHART_HEIGHT }}>
-        {period === "24h" ? (
-          <StackedBars
-            data={barsData}
-            height={CHART_HEIGHT}
-            maxValue={maxCapacityValue}
-            usedColor={USED_COLOR}
-            remainingColor={REMAINING_COLOR}
-          />
-        ) : (
-          <LineTrace data={capacityPoints} height={CHART_HEIGHT} minValue={0} maxValue={maxCapacityValue} color={REMAINING_COLOR} />
-        )}
-        <div
-          className="pointer-events-none absolute inset-x-0 border-t border-dashed border-muted"
-          style={{ top: CHART_HEIGHT - (limit / maxCapacityValue) * CHART_HEIGHT }}
-          aria-hidden="true"
-        />
+      <div className="flex gap-2">
+        <div className="relative shrink-0 text-right font-mono text-[10px] text-muted" style={{ height: CHART_HEIGHT, width: 24 }}>
+          {capacityTicks.map((tick) => (
+            <span
+              key={tick}
+              className="absolute right-0 -translate-y-1/2"
+              style={{ top: CHART_HEIGHT - (tick / maxCapacityValue) * CHART_HEIGHT }}
+            >
+              {tick}
+            </span>
+          ))}
+        </div>
+
+        <div className="relative min-w-0 flex-1 overflow-hidden border-b border-foreground" style={{ height: CHART_HEIGHT }}>
+          {capacityTicks
+            .filter((tick) => tick > 0)
+            .map((tick) => (
+              <div
+                key={tick}
+                className="pointer-events-none absolute inset-x-0 border-t border-muted/25"
+                style={{ top: CHART_HEIGHT - (tick / maxCapacityValue) * CHART_HEIGHT }}
+                aria-hidden="true"
+              />
+            ))}
+
+          {period === "24h" ? (
+            <StackedBars
+              data={barsData}
+              height={CHART_HEIGHT}
+              maxValue={maxCapacityValue}
+              usedColor={USED_COLOR}
+              remainingColor={REMAINING_COLOR}
+            />
+          ) : (
+            <LineTrace data={capacityPoints} height={CHART_HEIGHT} minValue={0} maxValue={maxCapacityValue} color={REMAINING_COLOR} />
+          )}
+
+          <div
+            className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-foreground"
+            style={{ top: CHART_HEIGHT - (limit / maxCapacityValue) * CHART_HEIGHT }}
+            aria-hidden="true"
+          >
+            <span className="absolute right-0 -top-4 bg-background px-1 font-mono text-[10px]">{limit} plan</span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex justify-between font-mono text-[11px] text-muted">
-        <span>{firstLabel}</span>
-        <span>{midLabel}</span>
-        <span>{lastLabel}</span>
+      <div className="flex gap-2">
+        <div className="shrink-0" style={{ width: 24 }} aria-hidden="true" />
+        <div className="flex flex-1 justify-between font-mono text-[11px] text-muted">
+          <span>{firstLabel}</span>
+          <span>{midLabel}</span>
+          <span>{lastLabel}</span>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-5 pt-1">

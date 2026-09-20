@@ -20,9 +20,9 @@ export function StackedBars({ data, height, maxValue, usedColor, remainingColor 
   const scale = height / maxValue;
 
   return (
-    <div className="flex items-end gap-[3px]" style={{ height }}>
+    <div className="flex w-full items-end gap-[2px]" style={{ height }}>
       {data.map((d, i) => (
-        <div key={`${d.t}-${i}`} className="flex w-[9px] flex-col justify-end" style={{ height }}>
+        <div key={`${d.t}-${i}`} className="flex min-w-0 flex-1 flex-col justify-end" style={{ height }}>
           <div style={{ height: Math.max(0, d.remaining * scale), background: remainingColor }} />
           <div style={{ height: Math.max(0, d.used * scale), background: usedColor }} />
         </div>
