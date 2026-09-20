@@ -225,7 +225,7 @@ const stage5: Stage = {
 
 const stage6: Stage = {
   id: "s6",
-  title: "You changed the plan.",
+  title: "Nothing that should affect anyone.",
   reveal: [
     {
       kind: "ticketNote",
