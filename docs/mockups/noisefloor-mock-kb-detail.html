@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>noisefloor — KB article mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#05070a; --line:#1c2a2e; --text:#d7e6e2; --dim:#9fb3af; --muted:#5a726e;
+    --accent:#3dffc4; --accent2:#7c9bff;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:#000; }
+  .stage { display:flex; justify-content:center; padding:24px; }
+  .page { position:relative; width:1440px; min-height:1040px; overflow:hidden; border-radius:6px;
+    font-family:"JetBrains Mono",monospace; color:var(--text);
+    background:
+      radial-gradient(ellipse 900px 520px at 10% 0%, #3dffc41a, transparent 60%),
+      radial-gradient(ellipse 900px 620px at 95% 40%, #7c9bff1a, transparent 60%),
+      var(--bg);
+  }
+  .orb { position:absolute; border-radius:50%; filter:blur(110px); opacity:0.25; z-index:0; pointer-events:none; }
+  .orb1 { width:520px; height:520px; background:var(--accent); top:-180px; left:-160px; }
+  .orb2 { width:460px; height:460px; background:var(--accent2); top:120px; right:-140px; }
+
+  .top { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; padding:28px 72px 0 72px; }
+  .word { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:500; letter-spacing:0.02em; }
+  .word svg { color:var(--accent); }
+  .signin { font-size:13px; color:var(--dim); text-decoration:none; }
+
+  .body-grid { position:relative; z-index:1; display:grid; grid-template-columns:1fr 300px; gap:56px; padding:56px 72px 0 72px; align-items:start; }
+
+  .crumb { font-size:11px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .crumb a { color:var(--muted); text-decoration:none; }
+  .crumb a:hover { color:var(--accent); }
+  .title-row { display:flex; align-items:baseline; gap:14px; margin-top:14px; }
+  h1 { margin:0; font-size:36px; font-weight:600; letter-spacing:-0.01em; }
+  .unit-chip { font-size:11px; color:var(--accent); border:1px solid var(--line); padding:3px 9px; letter-spacing:0.05em; }
+  .summary { margin:16px 0 0 0; font-size:16px; line-height:1.6; color:var(--dim); max-width:600px; border-left:2px solid var(--accent); padding-left:16px; }
+
+  article { margin-top:32px; max-width:620px; font-size:14px; line-height:1.75; color:var(--text); }
+  article p { margin:0 0 18px 0; }
+  article .callout { border:1px solid var(--line); background:rgba(255,255,255,0.02); padding:16px 18px; font-size:13px; color:var(--dim); margin:0 0 18px 0; }
+  article .callout b { color:var(--accent); }
+
+  aside { border:1px solid var(--line); background:rgba(255,255,255,0.015); padding:18px; position:sticky; top:56px; }
+  aside .aside-title { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:12px; }
+  .related-item { display:block; padding:9px 0; border-bottom:1px solid var(--line); text-decoration:none; color:var(--text); font-size:12px; }
+  .related-item:last-child { border-bottom:none; }
+  .related-item span { display:block; color:var(--muted); font-size:10px; margin-top:2px; }
+
+  .floor { position:absolute; left:0; right:0; bottom:0; height:64px; border-top:1px solid var(--line); background:rgba(5,7,10,0.92); display:flex; align-items:center; padding:0 72px; z-index:1; }
+  .floor-tick { display:flex; align-items:center; gap:8px; font-size:10px; color:var(--muted); letter-spacing:0.05em; width:160px; }
+  .floor-tick .bar { display:inline-block; width:8px; height:1px; background:var(--muted); }
+  nav.floor-nav { display:flex; align-items:flex-end; gap:56px; margin:0 auto; height:64px; }
+  nav.floor-nav a { display:flex; flex-direction:column; align-items:center; gap:6px; height:64px; justify-content:flex-end; padding-bottom:12px; text-decoration:none; color:var(--muted); }
+  nav.floor-nav a.active { color:var(--accent); transform:translateY(-8px); }
+  nav.floor-nav a.active svg { filter:drop-shadow(0 0 5px rgba(61,255,196,0.6)); }
+  nav.floor-nav a .tick { display:block; width:100%; height:2px; background:transparent; }
+  nav.floor-nav a.active .tick { background:var(--accent); box-shadow:0 0 6px rgba(61,255,196,0.6); }
+  nav.floor-nav a .label { font-size:11px; }
+  .floor-word { width:160px; text-align:right; font-size:10px; color:var(--muted); letter-spacing:0.05em; }
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="page">
+  <div class="orb orb1"></div><div class="orb orb2"></div>
+
+  <div class="top">
+    <div class="word">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+      <span>noisefloor</span>
+    </div>
+    <a href="#signin" class="signin">Sign in</a>
+  </div>
+
+  <div class="body-grid">
+    <div>
+      <div class="crumb"><a href="#kb">Knowledge base</a> <span>/</span> <span>Throughput &amp; capacity</span></div>
+      <div class="title-row">
+        <h1>Airtime</h1>
+        <span class="unit-chip">%</span>
+      </div>
+      <p class="summary">The share of available radio time actually spent transmitting or receiving. It's the field that explains capacity — and the one most techs check last.</p>
+
+      <article>
+        <p>Every field explanation on this page describes a reading you'll see on the console, normalized the same way regardless of vendor — this one just happens to be the one that trips people up most.</p>
+        <p>A radio channel is shared time, not shared bandwidth. Airtime is the percentage of that time your link (or, on a shared sector, all clients on it) is actually occupying the medium — transmitting, receiving, or waiting out interference. It's reported per-radio, but it reflects contention across everyone using the same channel.</p>
+        <div class="callout"><b>Why it matters:</b> signal strength and SNR describe whether a radio <i>can</i> hear well. Airtime describes whether it <i>gets to talk</i>. A link can show excellent signal, clean modulation, and still feel slow to the customer — because the channel itself is saturated. That combination is the single most common "the radio looks fine, so why is it slow?" ticket shape.</div>
+        <p>Airtime climbs for two different reasons that look identical on a single reading: more clients sharing the sector, or the same clients needing more retries per successful frame because the link is marginal. Distinguishing the two means checking client count and error/retry counts alongside it — airtime alone tells you capacity is tight, not why.</p>
+        <p>A radio pinned near 100% airtime during peak hours with otherwise healthy signal readings usually means the sector itself is oversubscribed, not that any one link is faulty — a different fix than anything you'd do to a single CPE.</p>
+      </article>
+    </div>
+
+    <aside>
+      <div class="aside-title">Related fields</div>
+      <a class="related-item" href="#link-quality">Link quality<span>Composite score — airtime is one input, not the whole picture</span></a>
+      <a class="related-item" href="#channel-utilization">Channel utilization<span>The whole spectrum's busy-ness, not just this link's share</span></a>
+      <a class="related-item" href="#client-count">Client count<span>More clients on a sector means less airtime for each</span></a>
+    </aside>
+  </div>
+
+  <div class="floor">
+    <div class="floor-tick"><span class="bar"></span><span>−104 dBm</span></div>
+    <nav class="floor-nav" aria-label="Primary">
+      <a href="#home"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="label">Home</span><span class="tick"></span></a>
+      <a href="#console"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h4M6 12h.01M10 12h8"/></svg><span class="label">Console</span><span class="tick"></span></a>
+      <a href="#kb" aria-current="page" class="active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="label">KB</span><span class="tick"></span></a>
+      <a href="#me"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="label">Me</span><span class="tick"></span></a>
+    </nav>
+    <div class="floor-word">the floor</div>
+  </div>
+</div>
+</div>
+</body>
+</html>
