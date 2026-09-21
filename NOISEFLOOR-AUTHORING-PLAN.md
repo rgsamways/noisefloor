@@ -1,5 +1,7 @@
 # noisefloor.ca — Authoring & Ladder Plan
 
+> **PARKED for phase one, 2026-09-21.** `NOISEFLOOR-OUTLINE.md`, which this document depends on, is superseded for phase one by [`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`](docs/NOISEFLOOR-CONSOLE-HANDOFF.md). Kept as historical record; not the current build target.
+
 > Companion to `NOISEFLOOR-OUTLINE.md`. That document defines v1: curated cases, played by trainees.
 > This document defines what comes after: **users build cases**, access to building and publishing is **earned by demonstrated skill**, and the community keeps cases honest through **review and challenge**.
 >

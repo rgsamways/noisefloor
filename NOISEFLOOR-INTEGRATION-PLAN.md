@@ -1,5 +1,7 @@
 # noisefloor.ca — Integration Plan (v3: the seam into live work)
 
+> **PARKED for phase one, 2026-09-21.** `NOISEFLOOR-OUTLINE.md` and `NOISEFLOOR-AUTHORING-PLAN.md`, which this document depends on, are superseded for phase one by [`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`](docs/NOISEFLOOR-CONSOLE-HANDOFF.md). Kept as historical record; not the current build target.
+
 > Third document in the set.
 > `NOISEFLOOR-OUTLINE.md` (v1) — trainees play curated cases.
 > `NOISEFLOOR-AUTHORING-PLAN.md` (v2) — users build cases; access is earned; the community keeps cases honest.

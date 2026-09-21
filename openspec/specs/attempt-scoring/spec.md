@@ -1,5 +1,7 @@
 # attempt-scoring Specification
 
+> **Status: Parked, 2026-09-21.** Built for the case-study product; superseded for phase one by the radio-console pivot (`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`). Documents the implementation as built, not under active development. See `PROJECT-PLAN.md` D16.
+
 ## Purpose
 The pure scoring logic behind a stage commit — turning an option choice or free-text answer into a score and feedback, and turning a completed path into a total that rewards revising a wrong theory, not just guessing right the first time.
 

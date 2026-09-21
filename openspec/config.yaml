@@ -1,11 +1,18 @@
 schema: spec-driven
 
 context: |
-  noisefloor.ca — case-based training web app for fixed-wireless ISP support
-  trainees. Full product/technical spec: NOISEFLOOR-OUTLINE.md at repo root.
-  Delivery phasing, decision log, and risk register: PROJECT-PLAN.md at repo
-  root. Read both before proposing a change — they are the source of truth,
-  this file is only a pointer to them.
+  noisefloor.ca — training for fixed-wireless ISP support technicians.
+
+  CURRENT (phase one, since 2026-09-21): a single vendor-neutral radio
+  console (normalized schema + simulation engine + UI), not case-based
+  training. Source of truth: docs/NOISEFLOOR-CONSOLE-HANDOFF.md at repo
+  root. Read it before proposing any change.
+
+  PARKED: the case-study product (NOISEFLOOR-OUTLINE.md, PROJECT-PLAN.md,
+  NOISEFLOOR-AUTHORING-PLAN.md, NOISEFLOOR-INTEGRATION-PLAN.md, and the
+  openspec specs marked "Status: Parked") is real, working, tested code —
+  not deleted, not the active line of work. Do not propose changes against
+  it unless the user explicitly asks to resume that line of work.
 
   Stack (mirrors the `kerfy` project's conventions exactly): pnpm workspaces,
   TypeScript throughout, strict mode. apps/web: React 19, React Router 8,

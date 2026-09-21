@@ -1,5 +1,7 @@
 # noisefloor.ca — Project Outline
 
+> **PARKED for phase one, 2026-09-21.** Superseded for phase one by the vendor-neutral radio-console pivot in [`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`](docs/NOISEFLOOR-CONSOLE-HANDOFF.md) — read that first. This document is kept as the historical record of the case-study design; case studies may return in a later phase built on top of the console, per the handoff doc §1, but this is not the current build target.
+
 > Case-based training for fixed-wireless ISP support technicians.
 > Learn to read the instruments, not memorize the answers.
 

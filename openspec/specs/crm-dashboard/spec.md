@@ -1,5 +1,7 @@
 # crm-dashboard Specification
 
+> **Status: Parked, 2026-09-21.** Built for the case-study product; superseded for phase one by the radio-console pivot (`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`). Documents the implementation as built, not under active development. See `PROJECT-PLAN.md` D16.
+
 ## Purpose
 The `crm/*` dashboard component family (`NOISEFLOOR-OUTLINE.md` §7) beyond `LinkCapacityChart`, which keeps its own dedicated capability. Renders entirely from `World`, same discipline as every other dashboard component.
 
