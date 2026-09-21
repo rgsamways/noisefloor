@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>noisefloor — direction C: minimal, one accent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0a0c; --panel:#111114; --line:#232327; --text:#e7e7ea; --muted:#6b6b73; --accent:#c6ff5e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Space Grotesk",sans-serif; padding:56px; min-height:100vh; }
+  .frame { max-width:920px; margin:0 auto; }
+  .topline { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:40px; }
+  .ident { font-size:20px; font-weight:600; letter-spacing:-0.01em; }
+  .ident span { color:var(--muted); font-weight:400; }
+  .chip { font-size:11px; color:var(--muted); letter-spacing:0.06em; }
+  .top-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:44px; padding-bottom:32px; border-bottom:1px solid var(--line); }
+  .quality { display:flex; align-items:baseline; gap:10px; }
+  .quality .num { font-size:56px; font-weight:700; letter-spacing:-0.02em; color:var(--accent); }
+  .quality .lbl { font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+  .status { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .columns { display:grid; grid-template-columns:1fr 1fr; gap:56px; }
+  .col-title { font-size:11px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; margin-bottom:18px; }
+  .big-num { font-size:32px; font-weight:600; margin-bottom:14px; }
+  .big-num.live { color:var(--accent); }
+  .sub-line { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; margin:11px 0 5px; }
+  .meter { height:2px; background:var(--line); margin-bottom:14px; overflow:hidden; }
+  .meter > div { height:100%; background:var(--text); transition:width 0.5s; }
+  .rate-row { display:flex; gap:2px; margin:14px 0; }
+  .rate-seg { flex:1; height:10px; background:var(--line); }
+  .rate-seg.on { background:var(--text); }
+  .chart { height:40px; margin-top:14px; }
+  .footer { display:flex; justify-content:space-between; margin-top:44px; padding-top:20px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); letter-spacing:0.02em; }
+  .footer b { color:var(--text); font-weight:500; }
+  .svc { display:flex; gap:18px; }
+  .svc span { display:flex; align-items:center; gap:6px; }
+  .dot-ok { width:5px;height:5px;border-radius:50%;background:var(--accent); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="topline">
+    <div class="ident">Sector-04A <span>↔</span> CPE-2231</div>
+    <div class="chip">3.1 KM &nbsp;·&nbsp; 5.8 GHZ &nbsp;·&nbsp; PTMP</div>
+  </div>
+  <div class="top-row">
+    <div class="quality">
+      <div class="num" id="qnum">76</div>
+      <div class="lbl">% link<br>quality</div>
+    </div>
+    <div class="status"><span class="dot"></span>live</div>
+  </div>
+  <div class="columns">
+    <div class="col" data-side="local">
+      <div class="col-title">Local · Sector radio</div>
+      <div class="big-num live"><span class="js-signal">−58</span> dBm</div>
+      <div class="sub-line"><span>Noise floor</span><span class="js-noise">−94 dBm</span></div>
+      <div class="sub-line"><span>SNR</span><span class="js-snr">36 dB</span></div>
+      <div class="sub-line"><span>Chain 1</span><span class="js-c1">−58</span></div>
+      <div class="meter"><div class="js-c1-bar" style="width:70%"></div></div>
+      <div class="sub-line"><span>Chain 2</span><span class="js-c2">−61</span></div>
+      <div class="meter"><div class="js-c2-bar" style="width:64%"></div></div>
+      <div class="sub-line"><span>Modulation</span><span>MCS 7</span></div>
+      <div class="rate-row js-rate"></div>
+      <svg class="chart js-chart" viewBox="0 0 300 40" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="col" data-side="remote">
+      <div class="col-title">Remote · CPE</div>
+      <div class="big-num"><span class="js-signal">−61</span> dBm</div>
+      <div class="sub-line"><span>Noise floor</span><span class="js-noise">−92 dBm</span></div>
+      <div class="sub-line"><span>SNR</span><span class="js-snr">31 dB</span></div>
+      <div class="sub-line"><span>Chain 1</span><span class="js-c1">−61</span></div>
+      <div class="meter"><div class="js-c1-bar" style="width:63%"></div></div>
+      <div class="sub-line"><span>Chain 2</span><span class="js-c2">−65</span></div>
+      <div class="meter"><div class="js-c2-bar" style="width:58%"></div></div>
+      <div class="sub-line"><span>Modulation</span><span>MCS 6</span></div>
+      <div class="rate-row js-rate"></div>
+      <svg class="chart js-chart" viewBox="0 0 300 40" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+  <div class="footer">
+    <div>CPU <b>18%</b> &nbsp;·&nbsp; RAM <b>44%</b> &nbsp;·&nbsp; UPTIME <b>14d 6h</b> &nbsp;·&nbsp; LAST LOG <b>2m ago</b></div>
+    <div class="svc"><span><span class="dot-ok"></span>Lease OK</span><span><span class="dot-ok"></span>NAT: none</span></div>
+  </div>
+</div>
+<script>
+const RATE_ON = 6;
+document.querySelectorAll(".js-rate").forEach(el => { for(let i=0;i<8;i++){ const s=document.createElement("div"); s.className="rate-seg"+(i<RATE_ON?" on":""); el.appendChild(s);} });
+const sides = { local:{signal:-58,c1:-58,c2:-61,hist:[]}, remote:{signal:-61,c1:-61,c2:-65,hist:[]} };
+for(const s of Object.values(sides)) for(let i=0;i<40;i++) s.hist.push(60+Math.random()*10);
+function jitter(b,a){ return b+(Math.random()*2-1)*a; }
+function renderChart(svg, pts, color){
+  svg.innerHTML="";
+  const min=Math.min(...pts)-5,max=Math.max(...pts)+5,w=300,h=40,stepX=w/(pts.length-1);
+  const coords=pts.map((v,i)=>[i*stepX, h-((v-min)/(max-min))*h]);
+  const line=coords.map(c=>c.join(",")).join(" ");
+  const ns="http://www.w3.org/2000/svg";
+  const pl=document.createElementNS(ns,"polyline");
+  pl.setAttribute("points",line); pl.setAttribute("fill","none"); pl.setAttribute("stroke",color); pl.setAttribute("stroke-width","1.5");
+  svg.appendChild(pl);
+}
+function tick(){
+  document.querySelectorAll(".col").forEach(col=>{
+    const side=sides[col.dataset.side]; const isLocal=col.dataset.side==="local";
+    side.signal=jitter(isLocal?-58:-61,1);
+    side.c1=jitter(isLocal?-58:-61,1.4);
+    side.c2=jitter(isLocal?-61:-65,1.4);
+    col.querySelector(".js-signal").textContent=side.signal.toFixed(0);
+    col.querySelector(".js-c1").textContent=side.c1.toFixed(0);
+    col.querySelector(".js-c2").textContent=side.c2.toFixed(0);
+    col.querySelector(".js-c1-bar").style.width=(100-Math.abs(side.c1))+"%";
+    col.querySelector(".js-c2-bar").style.width=(100-Math.abs(side.c2))+"%";
+    side.hist.push(jitter(60,8)); side.hist.shift();
+    renderChart(col.querySelector(".js-chart"), side.hist, isLocal?"#c6ff5e":"#6b6b73");
+  });
+}
+tick(); setInterval(tick,1200);
+</script>
+</body>
+</html>
