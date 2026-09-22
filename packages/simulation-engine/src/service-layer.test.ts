@@ -5,6 +5,7 @@ import {
   expiredLeaseFault,
   doubleNatFault,
   customerRouterOfflineFault,
+  wrongBootOrderFault,
   type ServiceLayerConfig,
 } from "./service-layer.js";
 
@@ -98,5 +99,18 @@ describe("simulateServiceLayer — customer router offline", () => {
     expect(snapshot.addressing.wanAddress.value).toBe(healthy.addressing.wanAddress.value);
     expect(snapshot.nat.upstreamPresent.value).toBe(healthy.nat.upstreamPresent.value);
     expect(snapshot.nat.customerSidePresent.value).toBe(healthy.nat.customerSidePresent.value);
+  });
+});
+
+describe("simulateServiceLayer — wrong boot order", () => {
+  it("shows the same broken lease state as expired lease, with no RadioLinkTelemetry input", () => {
+    // Type-level: ServiceLayerConfig/wrongBootOrderFault take no
+    // RadioLinkTelemetry or simulateRadioLink value at all — this is a
+    // runtime smoke test that the function still resolves without one.
+    const scenario = { faults: [wrongBootOrderFault(0)] };
+    const snapshot = simulateServiceLayer(config({ scenario }), 10);
+
+    expect(snapshot.dhcpLease.present.value).toBe(false);
+    expect(snapshot.dhcpLease.leaseAddress.value).not.toBe(snapshot.dhcpLease.expectedAddress.value);
   });
 });

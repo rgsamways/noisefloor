@@ -92,6 +92,10 @@ export function simulateServiceLayer(config: ServiceLayerConfig, atSec: number):
   };
 }
 
+// Same effect as wrongBootOrderFault below — kept as separate named
+// functions, not one alias, since they're expected to diverge if this
+// engine ever grows repair-action modeling (this fault's fix isn't order-
+// sensitive; wrongBootOrderFault's specifically is).
 export function expiredLeaseFault(triggerAtSec: number): ServiceLayerFault {
   return {
     triggerAtSec,
@@ -115,5 +119,23 @@ export function customerRouterOfflineFault(triggerAtSec: number): ServiceLayerFa
   return {
     triggerAtSec,
     overrides: { lanPortLinkUp: false },
+  };
+}
+
+// Same override as expiredLeaseFault above — this engine has never modeled
+// repair actions for any fault, so there's no boot *race* to simulate at
+// runtime, only the resulting broken-lease state. The diagnostic signature
+// ("radio green, customer down") comes from pairing this with a scenario
+// that also gives the paired simulateRadioLink call a small
+// baseUptimeSeconds at/around this same triggerAtSec, so the radio panel
+// shows a recent reboot correlating with a service layer that never
+// recovered — that correlation is what a trainee learns to read, not a
+// labeled cause field. No code coupling between the two simulate
+// functions is needed to represent that; it's a scenario-authoring
+// convention, not a mechanism.
+export function wrongBootOrderFault(triggerAtSec: number): ServiceLayerFault {
+  return {
+    triggerAtSec,
+    overrides: { dhcpLeasePresent: false, leaseAddress: SELF_ASSIGNED_ADDRESS },
   };
 }
