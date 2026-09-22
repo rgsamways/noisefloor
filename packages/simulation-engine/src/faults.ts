@@ -19,7 +19,26 @@ export type RampRecoverFault = {
   delta: number; // negative degrades linkHealth at the fault's peak
 };
 
-export type FaultDefinition = StepFault | RampRecoverFault;
+export type RampPersistFault = {
+  shape: "rampPersist";
+  startAtSec: number;
+  rampSec: number;
+  // Same dual-target split as StepFault: a gradual onset that either
+  // degrades the shared scalar or steps chainImbalanceDb directly.
+  target: "linkHealth" | "chainImbalanceDb";
+  delta: number;
+};
+
+export type IntermittentCycleFault = {
+  shape: "intermittentCycle";
+  startAtSec: number;
+  cyclePeriodSec: number;
+  activeDurationSec: number;
+  target: "linkHealth";
+  delta: number;
+};
+
+export type FaultDefinition = StepFault | RampRecoverFault | RampPersistFault | IntermittentCycleFault;
 
 export type FaultEffect = {
   linkHealthDelta: number;
@@ -56,8 +75,40 @@ function rampRecoverEffectAt(fault: RampRecoverFault, atSec: number): FaultEffec
   return { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0 };
 }
 
+// Ramps in over rampSec like rampRecoverEffectAt's ramp phase, then holds
+// the full effect indefinitely — no hold/recover phase to compute, unlike
+// rampRecover. A strict subset of that state machine, not new math.
+function rampPersistEffectAt(fault: RampPersistFault, atSec: number): FaultEffect {
+  const t = atSec - fault.startAtSec;
+  if (t < 0) return NO_EFFECT;
+  const frac = fault.rampSec === 0 ? 1 : Math.min(1, t / fault.rampSec);
+  return fault.target === "linkHealth"
+    ? { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0 }
+    : { linkHealthDelta: 0, chainImbalanceDeltaDb: fault.delta * frac };
+}
+
+// A hard on/off gate repeating every cyclePeriodSec — active (full effect)
+// for the first activeDurationSec of each cycle, inactive for the rest.
+// Interference is bursty, not gradual, so this deliberately doesn't ramp.
+function intermittentCycleEffectAt(fault: IntermittentCycleFault, atSec: number): FaultEffect {
+  const t = atSec - fault.startAtSec;
+  if (t < 0) return NO_EFFECT;
+  const phase = t % fault.cyclePeriodSec;
+  if (phase >= fault.activeDurationSec) return NO_EFFECT;
+  return { linkHealthDelta: fault.delta, chainImbalanceDeltaDb: 0 };
+}
+
 export function faultEffectAt(fault: FaultDefinition, atSec: number): FaultEffect {
-  return fault.shape === "step" ? stepEffectAt(fault, atSec) : rampRecoverEffectAt(fault, atSec);
+  switch (fault.shape) {
+    case "step":
+      return stepEffectAt(fault, atSec);
+    case "rampRecover":
+      return rampRecoverEffectAt(fault, atSec);
+    case "rampPersist":
+      return rampPersistEffectAt(fault, atSec);
+    case "intermittentCycle":
+      return intermittentCycleEffectAt(fault, atSec);
+  }
 }
 
 export function combinedFaultEffect(faults: readonly FaultDefinition[], atSec: number): FaultEffect {
@@ -96,5 +147,59 @@ export function rainFadeFault(
     recoverSec: opts.recoverSec,
     target: "linkHealth",
     delta: -(opts.magnitude ?? 0.4),
+  };
+}
+
+// handoff §6.2: "failing cable / water ingress — slow degradation over
+// weeks." Targets chainImbalanceDb per console-schema's own doc-comment
+// linking that field to "a bad cable or wet connector" — an unverified
+// guess (asked on review; the honest answer was "not sure," not a
+// confirmation — see design.md's Risks). rampSec is caller-supplied, same
+// "don't hardcode a timescale" lesson as rain fade.
+export function cableDegradationFault(
+  startAtSec: number,
+  opts: { rampSec: number; toDb?: number },
+): RampPersistFault {
+  return {
+    shape: "rampPersist",
+    startAtSec,
+    rampSec: opts.rampSec,
+    target: "chainImbalanceDb",
+    delta: opts.toDb ?? 6,
+  };
+}
+
+// handoff §6.2: "foliage growth — seasonal, gradual." Targets linkHealth:
+// leaves attenuate the whole path, not one chain differentially.
+export function foliageGrowthFault(
+  startAtSec: number,
+  opts: { rampSec: number; magnitude?: number },
+): RampPersistFault {
+  return {
+    shape: "rampPersist",
+    startAtSec,
+    rampSec: opts.rampSec,
+    target: "linkHealth",
+    delta: -(opts.magnitude ?? 0.3),
+  };
+}
+
+const SECONDS_PER_DAY = 24 * 60 * 60;
+
+// handoff §6.2: "interference — intermittent, often a daily rhythm."
+// cyclePeriodSec defaults to a day; every other parameter is
+// caller-supplied since "often" isn't "always." No per-cycle jitter in
+// this pass — deferred as a follow-up (design.md), not built here.
+export function interferenceFault(
+  startAtSec: number,
+  opts: { cyclePeriodSec?: number; activeDurationSec: number; magnitude?: number },
+): IntermittentCycleFault {
+  return {
+    shape: "intermittentCycle",
+    startAtSec,
+    cyclePeriodSec: opts.cyclePeriodSec ?? SECONDS_PER_DAY,
+    activeDurationSec: opts.activeDurationSec,
+    target: "linkHealth",
+    delta: -(opts.magnitude ?? 0.35),
   };
 }
