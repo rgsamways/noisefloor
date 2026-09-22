@@ -165,6 +165,16 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/simulation-engine:
+    dependencies:
+      '@noisefloor/console-schema':
+        specifier: workspace:*
+        version: link:../console-schema
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
 packages:
 
   '@better-auth/core@1.7.5':
