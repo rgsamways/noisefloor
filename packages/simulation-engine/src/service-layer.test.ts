@@ -4,6 +4,7 @@ import {
   simulateServiceLayer,
   expiredLeaseFault,
   doubleNatFault,
+  customerRouterOfflineFault,
   type ServiceLayerConfig,
 } from "./service-layer.js";
 
@@ -82,5 +83,20 @@ describe("simulateServiceLayer — double NAT", () => {
 
     expect(snapshot.nat.upstreamPresent.value).toBe(true);
     expect(snapshot.nat.customerSidePresent.value).toBe(true);
+  });
+});
+
+describe("simulateServiceLayer — customer router offline", () => {
+  it("drops the LAN link and nothing else", () => {
+    const healthy = simulateServiceLayer(config(), 10);
+    const scenario = { faults: [customerRouterOfflineFault(0)] };
+    const snapshot = simulateServiceLayer(config({ scenario }), 10);
+
+    expect(snapshot.lanPort.linkUp.value).toBe(false);
+    expect(snapshot.dhcpLease.present.value).toBe(healthy.dhcpLease.present.value);
+    expect(snapshot.dhcpLease.leaseAddress.value).toBe(healthy.dhcpLease.leaseAddress.value);
+    expect(snapshot.addressing.wanAddress.value).toBe(healthy.addressing.wanAddress.value);
+    expect(snapshot.nat.upstreamPresent.value).toBe(healthy.nat.upstreamPresent.value);
+    expect(snapshot.nat.customerSidePresent.value).toBe(healthy.nat.customerSidePresent.value);
   });
 });

@@ -21,6 +21,7 @@ export type ServiceLayerOverrides = {
   expectedAddress: string;
   natUpstreamPresent: boolean;
   natCustomerSidePresent: boolean;
+  lanPortLinkUp: boolean;
 };
 
 export type ServiceLayerFault = {
@@ -64,6 +65,7 @@ export function simulateServiceLayer(config: ServiceLayerConfig, atSec: number):
   // meaning the radio itself is what does customer-side NAT.
   const natUpstreamPresent = overrides.natUpstreamPresent ?? false;
   const natCustomerSidePresent = overrides.natCustomerSidePresent ?? true;
+  const lanPortLinkUp = overrides.lanPortLinkUp ?? true;
 
   const reading = <T>(value: T) => readingAt(value, config.baseTimeIso, atSec);
 
@@ -84,6 +86,9 @@ export function simulateServiceLayer(config: ServiceLayerConfig, atSec: number):
       upstreamPresent: reading(natUpstreamPresent),
       customerSidePresent: reading(natCustomerSidePresent),
     },
+    lanPort: {
+      linkUp: reading(lanPortLinkUp),
+    },
   };
 }
 
@@ -98,5 +103,17 @@ export function doubleNatFault(triggerAtSec: number): ServiceLayerFault {
   return {
     triggerAtSec,
     overrides: { natUpstreamPresent: true, natCustomerSidePresent: true },
+  };
+}
+
+// Applies only to the minority topology where a genuinely separate
+// downstream router sits behind a bridged radio — a router sharing the
+// radio's own power supply would go down together with it, which is
+// already covered by the existing far-end-drop staleness pattern, not
+// this fault. Touches only lanPortLinkUp, not dhcpLease/addressing/nat.
+export function customerRouterOfflineFault(triggerAtSec: number): ServiceLayerFault {
+  return {
+    triggerAtSec,
+    overrides: { lanPortLinkUp: false },
   };
 }
