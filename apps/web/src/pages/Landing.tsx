@@ -84,9 +84,9 @@ export function Landing() {
           <LinkPanel local={local} remote={remote} />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+        <div className="mt-24 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
           {FEATURES.map(({ title, Icon, body }) => (
-            <div key={title} className="flex flex-col gap-2 border-t pt-4" style={{ borderColor: "#1c2a2e" }}>
+            <div key={title} className="flex flex-col gap-3 border-t pt-5" style={{ borderColor: "#1c2a2e" }}>
               <div className="flex items-center gap-2.5">
                 <Icon size={18} aria-hidden="true" style={{ color: ACCENT }} />
                 <span className="text-xs font-semibold tracking-[0.1em] uppercase">{title}</span>
