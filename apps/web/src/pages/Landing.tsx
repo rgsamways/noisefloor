@@ -97,6 +97,17 @@ export function Landing() {
             </div>
           ))}
         </div>
+
+        <div className="mt-16 border-t pt-6" style={{ borderColor: "#1c2a2e" }}>
+          <Link
+            to="/about"
+            className="inline-flex items-center gap-2 text-[13px] tracking-[0.03em]"
+            style={{ color: MUTED }}
+          >
+            Why we built it this way
+            <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        </div>
       </div>
 
       <HudFloorNav />

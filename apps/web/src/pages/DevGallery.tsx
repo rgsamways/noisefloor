@@ -13,7 +13,7 @@ import { galleryAnnotations, gallerySeed, galleryWorld } from "../lib/gallery-wo
 
 export function DevGallery() {
   return (
-    <main className="flex min-h-screen flex-col gap-8 p-8">
+    <main className="flex min-h-screen flex-col gap-8 bg-[var(--paper)] p-8">
       <h1 className="text-xl font-semibold">Dashboard component gallery (dev only)</h1>
       <section className="flex flex-col gap-3">
         <h2 className="font-mono text-sm text-muted">crm/LinkCapacityChart</h2>

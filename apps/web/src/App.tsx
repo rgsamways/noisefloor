@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router";
 import { RequireAuth } from "./components/RequireAuth";
+import { About } from "./pages/About";
 import { CasePlayer } from "./pages/CasePlayer";
 import { Cases } from "./pages/Cases";
 import { Console } from "./pages/Console";
@@ -14,6 +15,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/about" element={<About />} />
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/console" element={<Console />} />
       <Route path="/kb" element={<KbIndex />} />
