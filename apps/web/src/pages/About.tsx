@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 
@@ -31,6 +32,12 @@ export function About() {
             vendor-neutral schema instead of a dozen proprietary ones.
           </p>
           <p>There's no login, no case to complete, no score. Just a live instrument, and the chance to build a gut sense of normal.</p>
+        </div>
+
+        <div className="mt-10 border-t pt-6" style={{ borderColor: "#1c2a2e" }}>
+          <Link to="/contact" className="text-[13px] tracking-[0.03em]" style={{ color: MUTED }}>
+            Have a real scenario worth simulating, or found a bug? Get in touch →
+          </Link>
         </div>
       </div>
 

@@ -12,6 +12,10 @@ const envSchema = z.object({
   // Unset in dev: magic-link emails are logged to the console instead of sent.
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().min(1).default("noisefloor <onboarding@resend.dev>"),
+  // Where /contact form submissions get delivered. Kept out of .env.example
+  // (unlike RESEND_FROM_EMAIL's generic default) since it's a real personal
+  // inbox, not a placeholder — set in .env locally and in Railway for prod.
+  CONTACT_TO_EMAIL: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse(process.env);
