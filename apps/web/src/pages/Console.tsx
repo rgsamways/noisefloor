@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LinkPanel } from "@noisefloor/dashboards";
 import { simulateRadioLink, foliageGrowthFault, type SimulationConfig } from "@noisefloor/simulation-engine";
+import { HudFloorNav } from "../components/HudFloorNav";
 
 const TICK_MS = 1000;
 
@@ -49,7 +50,7 @@ export function Console() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden p-6"
+      className="relative min-h-screen overflow-hidden p-6 pb-[88px] md:pb-20"
       style={{ background: "#05070a", fontFamily: '"JetBrains Mono", monospace', color: "#d7e6e2" }}
     >
       <div
@@ -63,6 +64,7 @@ export function Console() {
       <div className="relative mx-auto max-w-[960px]">
         <LinkPanel local={local} remote={remote} />
       </div>
+      <HudFloorNav />
     </div>
   );
 }
