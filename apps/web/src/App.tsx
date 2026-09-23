@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router";
 import { RequireAuth } from "./components/RequireAuth";
 import { CasePlayer } from "./pages/CasePlayer";
 import { Cases } from "./pages/Cases";
+import { Console } from "./pages/Console";
 import { DevGallery } from "./pages/DevGallery";
 import { Landing } from "./pages/Landing";
 import { Me } from "./pages/Me";
@@ -12,6 +13,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/console" element={<Console />} />
       <Route element={<RequireAuth />}>
         <Route path="/me" element={<Me />} />
         <Route path="/cases" element={<Cases />} />

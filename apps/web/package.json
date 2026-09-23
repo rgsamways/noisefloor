@@ -13,6 +13,8 @@
   "dependencies": {
     "@noisefloor/dashboards": "workspace:*",
     "@noisefloor/shared": "workspace:*",
+    "@noisefloor/console-schema": "workspace:*",
+    "@noisefloor/simulation-engine": "workspace:*",
     "better-auth": "^1.6.25",
     "lucide-react": "^1.28.0",
     "react": "^19.2.8",

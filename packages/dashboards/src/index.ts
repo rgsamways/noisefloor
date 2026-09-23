@@ -12,3 +12,5 @@ export * from "./crm/RealtimePingModal.js";
 export * from "./nms/DeviceOverview.js";
 export * from "./nms/DeviceManagePane.js";
 export * from "./nms/ApStationList.js";
+export * from "./console/severity.js";
+export * from "./console/LinkPanel.js";
