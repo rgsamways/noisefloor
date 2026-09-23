@@ -26,8 +26,16 @@
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
+/* The dark HUD colour is the site's true default background — the public
+   HUD pages (Landing, Console, KB) are the primary experience now. Legacy
+   light-themed pages (Me, Cases, SignIn) paint their own white background
+   explicitly rather than relying on this, so they're unaffected. Without
+   this, mobile browsers that reserve extra space below the viewport (e.g.
+   for a gesture bar) reveal a plain white strip beneath the HUD's fixed
+   floor nav, since HudPageShell only paints its own min-h-screen box, not
+   the true page background. */
 body {
-  background-color: var(--background);
+  background-color: #05070a;
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

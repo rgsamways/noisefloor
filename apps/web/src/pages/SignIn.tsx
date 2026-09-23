@@ -20,14 +20,14 @@ export function SignIn() {
 
   if (status === "sent") {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--paper)] p-6">
         <p className="text-foreground">Check your email for a sign-in link.</p>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-screen items-center justify-center bg-[var(--paper)] p-6">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <h1 className="text-xl font-semibold text-foreground">Sign in to noisefloor</h1>
         <input

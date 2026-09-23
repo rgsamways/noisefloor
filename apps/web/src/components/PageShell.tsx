@@ -7,7 +7,7 @@ import { BottomNav } from "./BottomNav";
 // navigate around in, same reasoning it already omits the floor nav.
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col pb-[72px] md:pb-16">
+    <div className="flex min-h-screen flex-col bg-[var(--paper)] pb-[72px] md:pb-16">
       {children}
       <BottomNav />
     </div>
