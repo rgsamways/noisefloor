@@ -10,6 +10,7 @@ import { KbArticleDetail } from "./pages/KbArticleDetail";
 import { KbIndex } from "./pages/KbIndex";
 import { Landing } from "./pages/Landing";
 import { Me } from "./pages/Me";
+import { Roadmap } from "./pages/Roadmap";
 import { SignIn } from "./pages/SignIn";
 
 export function App() {
@@ -18,6 +19,7 @@ export function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/roadmap" element={<Roadmap />} />
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/console" element={<Console />} />
       <Route path="/kb" element={<KbIndex />} />

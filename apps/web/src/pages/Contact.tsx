@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ContentFooterLinks } from "../components/ContentFooterLinks";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 
@@ -118,6 +119,8 @@ export function Contact() {
             )}
           </form>
         )}
+
+        <ContentFooterLinks />
       </div>
 
       <HudFloorNav />

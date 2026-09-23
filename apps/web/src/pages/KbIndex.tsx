@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { articles } from "@noisefloor/kb";
+import { ContentFooterLinks } from "../components/ContentFooterLinks";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 
@@ -43,6 +44,8 @@ export function KbIndex() {
             </Link>
           ))}
         </div>
+
+        <ContentFooterLinks />
       </div>
 
       <HudFloorNav />

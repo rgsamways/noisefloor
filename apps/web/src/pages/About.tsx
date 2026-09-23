@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { ContentFooterLinks } from "../components/ContentFooterLinks";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 
@@ -6,9 +6,9 @@ const MUTED = "#5a726e";
 
 // Matches the approved copy pass (2026-09-23) — deliberately no personal
 // narrative (Robin asked for it to be cut): this is about the product's
-// reasoning, not a bio. Not in HudFloorNav on purpose — see the "no
-// additional nav until there are several pages" decision from the same
-// conversation; reachable only via a contextual link from Landing for now.
+// reasoning, not a bio. Not in HudFloorNav on purpose — reachable via
+// ContentFooterLinks instead, same reasoning as that component's own header
+// comment.
 export function About() {
   return (
     <HudPageShell>
@@ -34,11 +34,7 @@ export function About() {
           <p>There's no login, no case to complete, no score. Just a live instrument, and the chance to build a gut sense of normal.</p>
         </div>
 
-        <div className="mt-10 border-t pt-6" style={{ borderColor: "#1c2a2e" }}>
-          <Link to="/contact" className="text-[13px] tracking-[0.03em]" style={{ color: MUTED }}>
-            Have a real scenario worth simulating, or found a bug? Get in touch →
-          </Link>
-        </div>
+        <ContentFooterLinks />
       </div>
 
       <HudFloorNav />
