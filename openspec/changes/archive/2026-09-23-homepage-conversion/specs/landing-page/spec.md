@@ -1,16 +1,4 @@
-# landing-page Specification
-
-## Purpose
-The public entry point to noisefloor — a stranger can land on `/`, understand what the site is, and reach the demo without signing in, per `NOISEFLOOR-OUTLINE.md` §8 and §15's definition of v1 done.
-
-## Requirements
-
-### Requirement: The landing page is reachable without authentication
-`/` SHALL render the public landing page for any visitor, signed in or not. It SHALL NOT redirect an unauthenticated visitor to the sign-in page.
-
-#### Scenario: An anonymous visitor loads the site
-- **WHEN** a visitor with no session loads `/`
-- **THEN** the landing page renders directly, with no redirect to `/sign-in`
+## MODIFIED Requirements
 
 ### Requirement: The landing page states what the site is and offers a path in
 The landing page SHALL present a headline, supporting copy, and a primary call-to-action linking toward the console, alongside a sign-in link for returning users.
