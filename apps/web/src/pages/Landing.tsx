@@ -47,7 +47,7 @@ export function Landing() {
           </Link>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 items-start gap-12 md:grid-cols-2 md:gap-16">
+        <div className="mt-5 grid grid-cols-1 items-start gap-12 md:grid-cols-2 md:gap-16">
           <div>
             <h1 className="text-[40px] leading-[1.08] font-semibold tracking-tight md:text-[58px]">
               Learn to read the{" "}
@@ -84,9 +84,9 @@ export function Landing() {
           <LinkPanel local={local} remote={remote} />
         </div>
 
-        <div className="mt-24 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
+        <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
           {FEATURES.map(({ title, Icon, body }) => (
-            <div key={title} className="flex flex-col gap-3 border-t pt-5" style={{ borderColor: "#1c2a2e" }}>
+            <div key={title} className="flex flex-col gap-2 border-t pt-4" style={{ borderColor: "#1c2a2e" }}>
               <div className="flex items-center gap-2.5">
                 <Icon size={18} aria-hidden="true" style={{ color: ACCENT }} />
                 <span className="text-xs font-semibold tracking-[0.1em] uppercase">{title}</span>

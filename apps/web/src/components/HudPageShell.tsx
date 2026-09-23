@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 export function HudPageShell({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative min-h-screen overflow-hidden p-6 pb-[88px] md:pb-20"
+      className="relative min-h-screen overflow-hidden p-6 pb-24 md:pb-24"
       style={{ background: "#05070a", fontFamily: '"JetBrains Mono", monospace', color: "#d7e6e2" }}
     >
       <div

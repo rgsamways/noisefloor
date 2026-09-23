@@ -32,3 +32,34 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Site-wide scrollbar styling to match the HUD look (near-black track,
+   hairline-bordered thumb, accent on hover/active) rather than the OS
+   default. Applies globally — this is the one visual chrome element that
+   isn't scoped per-page. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3d3a #05070a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #05070a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3d3a;
+  border: 2px solid #05070a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3dffc4;
+}
+
+::-webkit-scrollbar-corner {
+  background: #05070a;
+}
