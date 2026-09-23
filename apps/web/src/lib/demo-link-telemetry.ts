@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { RadioLinkTelemetry } from "@noisefloor/console-schema";
-import { simulateRadioLink, foliageGrowthFault, type SimulationConfig } from "@noisefloor/simulation-engine";
+import type { RadioLinkTelemetry, ServiceLayerTelemetry } from "@noisefloor/console-schema";
+import {
+  simulateRadioLink,
+  simulateServiceLayer,
+  foliageGrowthFault,
+  type SimulationConfig,
+  type ServiceLayerConfig,
+} from "@noisefloor/simulation-engine";
 
 const TICK_MS = 1000;
 
@@ -15,7 +21,9 @@ const TICK_MS = 1000;
 // during radio-fault-library's review), so it widens the chain-meter gap
 // but never moves linkQualityPct or the severity badge — verified by
 // actually looking at the rendered page, not assumed from the fault name.
-function useDemoConfigs(baseTimeIso: string): { local: SimulationConfig; remote: SimulationConfig } {
+function useDemoConfigs(
+  baseTimeIso: string,
+): { local: SimulationConfig; remote: SimulationConfig; serviceLayer: ServiceLayerConfig } {
   return useMemo(
     () => ({
       local: {
@@ -29,6 +37,12 @@ function useDemoConfigs(baseTimeIso: string): { local: SimulationConfig; remote:
         baseTimeIso,
         scenario: { faults: [foliageGrowthFault(-1_000_000, { rampSec: 100 })] },
       },
+      // Deliberately fault-free: the radio link demo is already degraded
+      // (REMOTE), so a healthy service layer here teaches the "two panels,
+      // judged independently" point the homepage's own copy makes — a
+      // degraded radio link doesn't automatically mean the service layer
+      // is broken too.
+      serviceLayer: { baseTimeIso },
     }),
     [baseTimeIso],
   );
@@ -38,7 +52,14 @@ function useDemoConfigs(baseTimeIso: string): { local: SimulationConfig; remote:
 // homepage's hero visual — extracted from Console.tsx once Landing.tsx
 // needed the identical thing (openspec/changes/homepage-conversion), same
 // "second consumer" reasoning that justified extracting HudPageShell.
-export function useDemoLinkTelemetry(): { local: RadioLinkTelemetry; remote: RadioLinkTelemetry } {
+// serviceLayer is a later addition (service-layer-panel change) that only
+// Console.tsx consumes — Landing.tsx's hero stays radio-link-only by
+// choice, not an oversight.
+export function useDemoLinkTelemetry(): {
+  local: RadioLinkTelemetry;
+  remote: RadioLinkTelemetry;
+  serviceLayer: ServiceLayerTelemetry;
+} {
   const [baseTimeIso] = useState(() => new Date().toISOString());
   const [atSec, setAtSec] = useState(0);
   const configs = useDemoConfigs(baseTimeIso);
@@ -51,5 +72,6 @@ export function useDemoLinkTelemetry(): { local: RadioLinkTelemetry; remote: Rad
   return {
     local: simulateRadioLink(configs.local, atSec),
     remote: simulateRadioLink(configs.remote, atSec),
+    serviceLayer: simulateServiceLayer(configs.serviceLayer, atSec),
   };
 }

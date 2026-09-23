@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RadioLinkTelemetry } from "@noisefloor/console-schema";
 import { Gauge } from "../primitives/Gauge.js";
+import { HudFrame } from "../primitives/HudFrame.js";
 import { LinearMeter } from "../primitives/LinearMeter.js";
 import { SegmentBar } from "../primitives/SegmentBar.js";
 import { LineTrace, type LineTraceDatum } from "../primitives/LineTrace.js";
@@ -142,34 +143,7 @@ export function LinkPanel({ local, remote }: LinkPanelProps) {
   const gaugeValue = local.link.linkQualityPct.value;
 
   return (
-    <div
-      className="relative border p-6"
-      style={{
-        borderColor: LINE,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.015), transparent 30%), rgba(6,10,12,0.55)",
-        borderRadius: 4,
-      }}
-    >
-      {(["tl", "tr", "bl", "br"] as const).map((corner) => (
-        <span
-          key={corner}
-          className="pointer-events-none absolute h-3.5 w-3.5"
-          style={{
-            borderColor: ACCENT,
-            opacity: 0.6,
-            top: corner.startsWith("t") ? -1 : undefined,
-            bottom: corner.startsWith("b") ? -1 : undefined,
-            left: corner.endsWith("l") ? -1 : undefined,
-            right: corner.endsWith("r") ? -1 : undefined,
-            borderTopWidth: corner.startsWith("t") ? 1 : 0,
-            borderBottomWidth: corner.startsWith("b") ? 1 : 0,
-            borderLeftWidth: corner.endsWith("l") ? 1 : 0,
-            borderRightWidth: corner.endsWith("r") ? 1 : 0,
-            borderStyle: "solid",
-          }}
-        />
-      ))}
-
+    <HudFrame>
       <div
         className="mb-4.5 flex flex-col gap-1 border-b pb-3.5 text-sm md:flex-row md:items-baseline md:justify-between"
         style={{ borderColor: LINE }}
@@ -222,7 +196,7 @@ export function LinkPanel({ local, remote }: LinkPanelProps) {
           <b style={{ color: TEXT }}>{formatUptime(local.radioHealth.uptimeSeconds.value)}</b>
         </div>
       </div>
-    </div>
+    </HudFrame>
   );
 }
 
