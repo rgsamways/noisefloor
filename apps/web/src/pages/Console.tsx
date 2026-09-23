@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LinkPanel } from "@noisefloor/dashboards";
 import { simulateRadioLink, foliageGrowthFault, type SimulationConfig } from "@noisefloor/simulation-engine";
 import { HudFloorNav } from "../components/HudFloorNav";
+import { HudPageShell } from "../components/HudPageShell";
 
 const TICK_MS = 1000;
 
@@ -49,22 +50,11 @@ export function Console() {
   const remote = simulateRadioLink(configs.remote, atSec);
 
   return (
-    <div
-      className="relative min-h-screen overflow-hidden p-6 pb-[88px] md:pb-20"
-      style={{ background: "#05070a", fontFamily: '"JetBrains Mono", monospace', color: "#d7e6e2" }}
-    >
-      <div
-        className="pointer-events-none absolute -top-36 -left-30 h-[420px] w-[420px] rounded-full opacity-35 blur-[90px]"
-        style={{ background: "#3dffc4" }}
-      />
-      <div
-        className="pointer-events-none absolute -right-16 -bottom-30 h-[360px] w-[360px] rounded-full opacity-35 blur-[90px]"
-        style={{ background: "#7c9bff" }}
-      />
+    <HudPageShell>
       <div className="relative mx-auto max-w-[960px]">
         <LinkPanel local={local} remote={remote} />
       </div>
       <HudFloorNav />
-    </div>
+    </HudPageShell>
   );
 }

@@ -1,0 +1,24 @@
+{
+  "name": "@noisefloor/kb",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "generate": "node scripts/generate-articles.mjs",
+    "pretypecheck": "pnpm run generate",
+    "build": "pnpm run generate && tsc -p tsconfig.json && node dist/validate-articles.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -4,6 +4,8 @@ import { CasePlayer } from "./pages/CasePlayer";
 import { Cases } from "./pages/Cases";
 import { Console } from "./pages/Console";
 import { DevGallery } from "./pages/DevGallery";
+import { KbArticleDetail } from "./pages/KbArticleDetail";
+import { KbIndex } from "./pages/KbIndex";
 import { Landing } from "./pages/Landing";
 import { Me } from "./pages/Me";
 import { SignIn } from "./pages/SignIn";
@@ -14,6 +16,8 @@ export function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/console" element={<Console />} />
+      <Route path="/kb" element={<KbIndex />} />
+      <Route path="/kb/:slug" element={<KbArticleDetail />} />
       <Route element={<RequireAuth />}>
         <Route path="/me" element={<Me />} />
         <Route path="/cases" element={<Cases />} />
