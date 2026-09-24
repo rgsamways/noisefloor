@@ -5,7 +5,7 @@ import { HudFrame } from "../primitives/HudFrame.js";
 import { LinearMeter } from "../primitives/LinearMeter.js";
 import { SegmentBar } from "../primitives/SegmentBar.js";
 import { LineTrace, type LineTraceDatum } from "../primitives/LineTrace.js";
-import { SEVERITY_COLORS, linkQualityToSeverity, type Severity } from "./severity.js";
+import { SEVERITY_COLORS, linkQualityToSeverity, chainImbalanceToSeverity, type Severity } from "./severity.js";
 
 export type LinkPanelProps = {
   local: RadioLinkTelemetry;
@@ -52,6 +52,11 @@ function Column({ label, sublabel, telemetry }: { label: string; sublabel: strin
   const { link } = telemetry;
   const severity = linkQualityToSeverity(link.linkQualityPct.value);
   const color = SEVERITY_COLORS[severity];
+  // Judged independently from the column's overall severity: a
+  // chain-imbalance-only fault (wind misalignment, cable degradation)
+  // should visibly color the chain meters even when linkQualityPct — and
+  // therefore the badge above — hasn't moved. See severity.ts.
+  const chainColor = SEVERITY_COLORS[chainImbalanceToSeverity(link.chainImbalanceDb.value)];
   const [chain1, chain2] = splitChains(link.signalDbm.value, link.chainImbalanceDb.value);
   const history = useSignalHistory(link.signalDbm.value);
 
@@ -91,7 +96,7 @@ function Column({ label, sublabel, telemetry }: { label: string; sublabel: strin
           min={-100}
           max={-30}
           label="Chain 1"
-          color={color}
+          color={chainColor}
           trackColor="#0f1a1c"
           square
           labelClassName="flex items-baseline justify-between font-mono text-[11px]"
@@ -104,7 +109,7 @@ function Column({ label, sublabel, telemetry }: { label: string; sublabel: strin
           min={-100}
           max={-30}
           label="Chain 2"
-          color={color}
+          color={chainColor}
           trackColor="#0f1a1c"
           square
           labelClassName="flex items-baseline justify-between font-mono text-[11px]"

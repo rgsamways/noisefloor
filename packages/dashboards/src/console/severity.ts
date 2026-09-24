@@ -22,3 +22,22 @@ export function linkQualityToSeverity(pct: number): Severity {
   if (pct >= WARN_THRESHOLD) return "warn";
   return "bad";
 }
+
+// Field-confirmed: alignment problems are "obvious" once chain delta
+// reaches roughly 5 dB or more (see simulation-engine's
+// windMisalignmentFault comment) — that's the warn/bad boundary here.
+// Judged independently from linkQualityToSeverity: a chain-imbalance-only
+// fault (wind misalignment, cable degradation) should visibly color the
+// chain readings even when linkQualityPct — and therefore the column's
+// overall badge — hasn't moved.
+const CHAIN_OK_THRESHOLD_DB = 3;
+const CHAIN_WARN_THRESHOLD_DB = 5;
+const CHAIN_BAD_THRESHOLD_DB = 8;
+
+export function chainImbalanceToSeverity(imbalanceDb: number): Severity {
+  const magnitude = Math.abs(imbalanceDb);
+  if (magnitude >= CHAIN_BAD_THRESHOLD_DB) return "bad";
+  if (magnitude >= CHAIN_WARN_THRESHOLD_DB) return "warn";
+  if (magnitude >= CHAIN_OK_THRESHOLD_DB) return "ok";
+  return "good";
+}
