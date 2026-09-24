@@ -11,14 +11,63 @@ import path from "node:path";
 import matter from "gray-matter";
 import { z } from "zod";
 
+// Keep KB_CATEGORIES in sync with src/schema.ts's list (design.md's
+// Decision 1) — duplicated here for the same reason the rest of this
+// schema is duplicated (see file header).
+const KB_CATEGORIES = [
+  "rf-fundamentals",
+  "frequency-spectrum",
+  "modulation-phy-capacity",
+  "antennas-rf-hardware",
+  "radios-field-hardware",
+  "network-topology",
+  "ethernet-poe-cabling",
+  "ip-networking",
+  "nat-routing-service-layer",
+  "protocols-management",
+  "diagnostics-monitoring",
+  "environmental-effects",
+  "operations-process",
+];
+
 const ArticleSchema = z.object({
   id: z.string(),
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "slug must be URL-safe (lowercase, hyphen-separated)"),
   title: z.string(),
   summary: z.string(),
-  body: z.string(),
+  technicalExplanation: z.string(),
+  laymanExplanation: z.string(),
+  category: z.enum(KB_CATEGORIES),
+  icon: z.string().optional(),
+  aliases: z.array(z.string()).optional(),
   relatedFields: z.array(z.string()).optional(),
 });
+
+const SECTION_HEADING = /^##\s*(technical|layman)\s*$/gim;
+
+// Duplicates parse.ts's splitExplanations — this script runs before tsc
+// compiles src/, so it can't import the compiled version (same reason
+// the rest of this file's schema is a duplicate, see header comment).
+function splitExplanations(content) {
+  const matches = [...content.matchAll(SECTION_HEADING)];
+  if (matches.length !== 2) {
+    throw new Error('KB article body must contain exactly one "## Technical" and one "## Layman" heading');
+  }
+
+  const sections = {};
+  for (let i = 0; i < matches.length; i++) {
+    const label = matches[i][1].toLowerCase();
+    const start = matches[i].index + matches[i][0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index : content.length;
+    sections[label] = content.slice(start, end).trim();
+  }
+
+  if (!sections.technical || !sections.layman) {
+    throw new Error('KB article body must contain exactly one "## Technical" and one "## Layman" heading');
+  }
+
+  return { technicalExplanation: sections.technical, laymanExplanation: sections.layman };
+}
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const contentDir = path.join(rootDir, "..", "content");
@@ -29,7 +78,16 @@ const files = readdirSync(contentDir).filter((f) => f.endsWith(".md"));
 const articles = files.map((file) => {
   const raw = readFileSync(path.join(contentDir, file), "utf-8");
   const { data, content } = matter(raw);
-  const parsed = ArticleSchema.safeParse({ ...data, body: content.trim() });
+
+  let explanations;
+  try {
+    explanations = splitExplanations(content.trim());
+  } catch (error) {
+    console.error(`KB content build failed: ${file}\n${error.message}`);
+    process.exit(1);
+  }
+
+  const parsed = ArticleSchema.safeParse({ ...data, ...explanations });
   if (!parsed.success) {
     console.error(`KB content build failed: ${file}\n${parsed.error.message}`);
     process.exit(1);

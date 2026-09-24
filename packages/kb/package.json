@@ -18,7 +18,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@noisefloor/console-schema": "workspace:*",
     "gray-matter": "^4.0.3",
+    "lucide-react": "^1.28.0",
     "typescript": "^5.9.3"
   }
 }
