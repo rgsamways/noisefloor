@@ -3,49 +3,41 @@ import type { RadioLinkTelemetry, ServiceLayerTelemetry } from "@noisefloor/cons
 import {
   simulateRadioLink,
   simulateServiceLayer,
-  foliageGrowthFault,
   type SimulationConfig,
   type ServiceLayerConfig,
 } from "@noisefloor/simulation-engine";
+import { SCENARIOS, DEFAULT_SCENARIO, type ScenarioKey } from "./console-scenarios.js";
 
 const TICK_MS = 1000;
 
-// Hardcoded demo scenario — no fault/scenario picker exists yet (deferred,
-// see openspec/changes/radio-console-ui). LOCAL stays healthy throughout;
-// REMOTE runs foliageGrowthFault triggered far in the past with a short
-// ramp so it's already fully plateaued at "warn" severity before the page
-// ever loads. This targets linkHealth directly, which is what the column
-// severity badge is judged on. Two faults were deliberately NOT used here:
-// rainFadeFault always recovers (would drift REMOTE back to healthy
-// mid-demo); cableDegradationFault only steps chainImbalanceDb (confirmed
-// during radio-fault-library's review), so it widens the chain-meter gap
-// but never moves linkQualityPct or the severity badge — verified by
-// actually looking at the rendered page, not assumed from the fault name.
+// LOCAL/REMOTE follows real T1 practice, not a fixed tower-vs-customer
+// split: LOCAL is whichever radio you're logged into, and T1 more commonly
+// logs into the customer's (CPE) radio — so LOCAL = CPE and REMOTE =
+// Sector here. Base config below is scenario-agnostic (distance/band/gear/
+// seed); which fault (if any) is active comes from console-scenarios.ts,
+// keyed by scenarioKey, and is merged on top per side.
 function useDemoConfigs(
   baseTimeIso: string,
+  scenarioKey: ScenarioKey,
 ): { local: SimulationConfig; remote: SimulationConfig; serviceLayer: ServiceLayerConfig } {
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const scenario = SCENARIOS[scenarioKey];
+    return {
       local: {
-        linkProfile: { distanceKm: 3.1, band: "5.8GHz", gearClass: "sector" },
+        linkProfile: { distanceKm: 3.1, band: "5.8GHz", gearClass: "cpe" },
         seed: "console-demo-local",
         baseTimeIso,
+        ...scenario.local,
       },
       remote: {
-        linkProfile: { distanceKm: 3.1, band: "5.8GHz", gearClass: "cpe" },
+        linkProfile: { distanceKm: 3.1, band: "5.8GHz", gearClass: "sector" },
         seed: "console-demo-remote",
         baseTimeIso,
-        scenario: { faults: [foliageGrowthFault(-1_000_000, { rampSec: 100 })] },
+        ...scenario.remote,
       },
-      // Deliberately fault-free: the radio link demo is already degraded
-      // (REMOTE), so a healthy service layer here teaches the "two panels,
-      // judged independently" point the homepage's own copy makes — a
-      // degraded radio link doesn't automatically mean the service layer
-      // is broken too.
-      serviceLayer: { baseTimeIso },
-    }),
-    [baseTimeIso],
-  );
+      serviceLayer: { baseTimeIso, ...scenario.serviceLayer },
+    };
+  }, [baseTimeIso, scenarioKey]);
 }
 
 // Shared demo scenario + 1 Hz live-tick, used by both /console and the
@@ -54,15 +46,18 @@ function useDemoConfigs(
 // "second consumer" reasoning that justified extracting HudPageShell.
 // serviceLayer is a later addition (service-layer-panel change) that only
 // Console.tsx consumes — Landing.tsx's hero stays radio-link-only by
-// choice, not an oversight.
-export function useDemoLinkTelemetry(): {
+// choice, not an oversight. `scenarioKey` defaults to the same scenario
+// this hook always showed before the picker existed (openspec/changes/
+// console-scenario-picker), so Landing.tsx's no-argument call site is
+// unaffected — only Console.tsx passes a visitor-selected key.
+export function useDemoLinkTelemetry(scenarioKey: ScenarioKey = DEFAULT_SCENARIO): {
   local: RadioLinkTelemetry;
   remote: RadioLinkTelemetry;
   serviceLayer: ServiceLayerTelemetry;
 } {
   const [baseTimeIso] = useState(() => new Date().toISOString());
   const [atSec, setAtSec] = useState(0);
-  const configs = useDemoConfigs(baseTimeIso);
+  const configs = useDemoConfigs(baseTimeIso, scenarioKey);
 
   useEffect(() => {
     const id = setInterval(() => setAtSec((s) => s + 1), TICK_MS);

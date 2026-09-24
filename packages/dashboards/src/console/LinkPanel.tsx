@@ -153,7 +153,7 @@ export function LinkPanel({ local, remote }: LinkPanelProps) {
             className="inline-block h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full"
             style={{ background: ACCENT, boxShadow: `0 0 8px ${ACCENT}` }}
           />
-          LINK · <b style={{ color: ACCENT }}>SECTOR-04A</b>&nbsp;↔&nbsp;<b style={{ color: ACCENT }}>CPE-2231</b>
+          LINK · <b style={{ color: ACCENT }}>CPE-2231</b>&nbsp;↔&nbsp;<b style={{ color: ACCENT }}>SECTOR-04A</b>
         </div>
         <div className="text-[10px] tracking-[0.08em]" style={{ color: MUTED }}>
           {local.farEnd.distanceKm.value} KM · {(local.link.frequencyMhz.value / 1000).toFixed(1)} GHZ · PTMP
@@ -173,8 +173,8 @@ export function LinkPanel({ local, remote }: LinkPanelProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <Column label="Local" sublabel="Sector Radio" telemetry={local} />
-        <Column label="Remote" sublabel="CPE" telemetry={remote} />
+        <Column label="Local" sublabel="CPE" telemetry={local} />
+        <Column label="Remote" sublabel="Sector Radio" telemetry={remote} />
       </div>
 
       <div className="mt-4.5 flex flex-wrap justify-center gap-4 text-[9px] tracking-[0.08em]" style={{ color: MUTED }}>
