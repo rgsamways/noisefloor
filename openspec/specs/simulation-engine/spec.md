@@ -58,13 +58,6 @@ The engine SHALL support a "rampPersist" time-signature shape that ramps a fault
 - **WHEN** a fault using the `rampPersist` shape triggers and enough simulated time passes for its ramp to complete
 - **THEN** the affected fields SHALL reach and remain at the degraded level for all subsequent snapshots, with no ramp-out or recovery phase
 
-### Requirement: Cable degradation applies a gradual, non-recovering ramp
-The engine SHALL support a "cable degradation" fault (water ingress / failing cable) using the `rampPersist` shape, degrading over a duration configurable up to multiple weeks, that does not recover without an explicit un-trigger.
-
-#### Scenario: Cable degradation worsens gradually and plateaus
-- **WHEN** a "cable degradation" fault triggers during a simulation run
-- **THEN** the affected readings SHALL degrade progressively over the fault's configured ramp period and remain at the degraded level for snapshots taken well after the ramp completes
-
 ### Requirement: Foliage growth applies a gradual, non-recovering ramp over a longer timescale
 The engine SHALL support a "foliage growth" fault using the `rampPersist` shape, with a configurable ramp duration suited to a multi-week-to-seasonal timescale, that does not recover without an explicit un-trigger.
 
@@ -124,6 +117,17 @@ The engine SHALL support a "customer router offline" fault that, once triggered,
 #### Scenario: Customer router offline drops the LAN link and nothing else
 - **WHEN** a "customer router offline" fault has triggered by the time of a snapshot, with no other fault active
 - **THEN** the LAN-port link state SHALL indicate no active link, and `dhcpLease`, `addressing`, and `nat` SHALL match their healthy-baseline values
+
+### Requirement: Cable degradation degrades the LAN-port Ethernet link, not RF fields
+The engine SHALL support a "cable degradation" fault that, once triggered, reduces `lanPort.linkSpeedMbps` below its healthy-baseline value and raises `lanPort.crcErrorCount` above zero, while leaving `lanPort.linkUp` `true` and leaving `dhcpLease`, `addressing`, `nat`, and every `RadioLinkTelemetry` field at their healthy-baseline values.
+
+#### Scenario: Cable degradation shows a degraded-but-connected LAN port
+- **WHEN** a "cable degradation" fault has triggered by the time of a `ServiceLayerTelemetry` snapshot
+- **THEN** `lanPort.linkUp` SHALL read `true`, `lanPort.linkSpeedMbps` SHALL be below its healthy-baseline value, and `lanPort.crcErrorCount` SHALL be greater than `0`
+
+#### Scenario: Cable degradation does not require or affect any RadioLinkTelemetry value
+- **WHEN** a "cable degradation" fault is defined and applied to produce a `ServiceLayerTelemetry` snapshot
+- **THEN** the engine SHALL NOT require any `RadioLinkTelemetry` value as an input to compute the result, and a `RadioLinkTelemetry` snapshot for the same link taken at the same time SHALL be unaffected by whether this fault is active
 
 ### Requirement: Wrong boot order produces the same broken-lease state as an expired lease
 The engine SHALL support a "wrong boot order" fault that, once triggered, produces the same `ServiceLayerTelemetry` effect as the "expired lease" fault (`dhcpLease.present` false, a self-assigned-looking `leaseAddress` distinct from `expectedAddress`), without requiring any timing coordination with `RadioLinkTelemetry` simulation.

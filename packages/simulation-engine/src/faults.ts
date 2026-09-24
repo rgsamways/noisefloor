@@ -150,25 +150,6 @@ export function rainFadeFault(
   };
 }
 
-// handoff §6.2: "failing cable / water ingress — slow degradation over
-// weeks." Targets chainImbalanceDb per console-schema's own doc-comment
-// linking that field to "a bad cable or wet connector" — an unverified
-// guess (asked on review; the honest answer was "not sure," not a
-// confirmation — see design.md's Risks). rampSec is caller-supplied, same
-// "don't hardcode a timescale" lesson as rain fade.
-export function cableDegradationFault(
-  startAtSec: number,
-  opts: { rampSec: number; toDb?: number },
-): RampPersistFault {
-  return {
-    shape: "rampPersist",
-    startAtSec,
-    rampSec: opts.rampSec,
-    target: "chainImbalanceDb",
-    delta: opts.toDb ?? 6,
-  };
-}
-
 // handoff §6.2: "foliage growth — seasonal, gradual." Targets linkHealth:
 // leaves attenuate the whole path, not one chain differentially.
 export function foliageGrowthFault(

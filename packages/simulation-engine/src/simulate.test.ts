@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RadioLinkTelemetrySchema, type LinkProfile } from "@noisefloor/console-schema";
 import { simulateRadioLink, type SimulationConfig } from "./simulate.js";
-import { windMisalignmentFault, rainFadeFault, cableDegradationFault, foliageGrowthFault, interferenceFault } from "./faults.js";
+import { windMisalignmentFault, rainFadeFault, foliageGrowthFault, interferenceFault } from "./faults.js";
 
 const profile: LinkProfile = { distanceKm: 3.1, band: "5.8GHz", gearClass: "sector" };
 const baseTimeIso = "2026-09-21T00:00:00.000Z";
@@ -85,22 +85,6 @@ describe("simulateRadioLink — staleness / dead-poll", () => {
     expect(longAfterDrop.farEnd.latencyMs.value).toBe(atDrop.farEnd.latencyMs.value);
     expect(longAfterDrop.farEnd.latencyMs.asOf).toBe(atDrop.farEnd.latencyMs.asOf);
     expect(longAfterDrop.timeEvidence.lastSuccessfulPoll.asOf).toBe(atDrop.timeEvidence.lastSuccessfulPoll.asOf);
-  });
-});
-
-describe("simulateRadioLink — cable degradation", () => {
-  it("ramps chainImbalanceDb up over the configured duration and plateaus", () => {
-    const scenario = { faults: [cableDegradationFault(0, { rampSec: 604_800 })] }; // 1 week
-    const healthy = simulateRadioLink(config(), -1);
-    const ramping = simulateRadioLink(config({ scenario }), 302_400); // halfway
-    const plateaued = simulateRadioLink(config({ scenario }), 2_000_000); // long after
-
-    expect(ramping.link.chainImbalanceDb.value).toBeGreaterThan(healthy.link.chainImbalanceDb.value);
-    expect(plateaued.link.chainImbalanceDb.value).toBeGreaterThanOrEqual(5);
-    // Confirm it doesn't recover: a snapshot far beyond the ramp is at least
-    // as degraded as one taken right at the end of the ramp.
-    const atRampEnd = simulateRadioLink(config({ scenario }), 604_800);
-    expect(plateaued.link.chainImbalanceDb.value).toBeCloseTo(atRampEnd.link.chainImbalanceDb.value, 0);
   });
 });
 

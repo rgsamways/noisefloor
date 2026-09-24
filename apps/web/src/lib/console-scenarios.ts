@@ -67,10 +67,6 @@ export const SCENARIOS: Record<ScenarioKey, ScenarioDefinition> = {
       },
     },
   },
-  cableDegradation: {
-    label: "Cable degradation",
-    local: { scenario: { faults: [cableDegradationFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100 })] } },
-  },
   foliageGrowth: {
     label: "Foliage growth",
     local: { scenario: { faults: [foliageGrowthFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100 })] } },
@@ -86,6 +82,13 @@ export const SCENARIOS: Record<ScenarioKey, ScenarioDefinition> = {
         faults: [interferenceFault(TRIGGERED_IN_PAST_SEC, { cyclePeriodSec: 30, activeDurationSec: 12 })],
       },
     },
+  },
+  cableDegradation: {
+    label: "Cable degradation",
+    // Ethernet/PoE-run fault, not RF — see demo-link-telemetry.ts and
+    // simulation-engine's own cableDegradationFault comment for why this
+    // moved here from the radio-link bucket.
+    serviceLayer: { scenario: { faults: [cableDegradationFault(TRIGGERED_IN_PAST_SEC)] } },
   },
   expiredLease: {
     label: "Expired lease",

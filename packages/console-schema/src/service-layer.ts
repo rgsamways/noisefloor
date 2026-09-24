@@ -34,8 +34,16 @@ export type NatGroup = z.infer<typeof NatGroupSchema>;
 // LAN-facing port. Nearly universal on real radio hardware, and the
 // signal that would actually change if a genuinely separate downstream
 // customer router lost power (handoff §5's "customer router offline").
+// linkSpeedMbps/duplex/crcErrorCount let this link be degraded-but-up,
+// not just fully up or down — the actual real-world signature of a
+// failing Ethernet/PoE run (a bad cable), confirmed against real T1
+// diagnostic practice: negotiated speed falls back and CRC/FCS errors
+// climb while the link itself stays up.
 export const LanPortGroupSchema = z.object({
   linkUp: readingSchema(z.boolean()),
+  linkSpeedMbps: readingSchema(z.number().positive()),
+  duplex: readingSchema(z.enum(["full", "half"])),
+  crcErrorCount: readingSchema(z.number().nonnegative()),
 });
 export type LanPortGroup = z.infer<typeof LanPortGroupSchema>;
 

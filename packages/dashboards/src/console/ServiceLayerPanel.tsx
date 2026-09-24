@@ -23,10 +23,16 @@ const SEVERITY_LABEL: Record<Severity, string> = {
 // continuous percentage, so severity comes from which conditions are
 // true rather than a threshold. lanPort down and no active lease are both
 // "customer can't get online" states (bad); double NAT still passes
-// traffic, just degrades it (warn).
-function serviceLayerSeverity(telemetry: ServiceLayerTelemetry): Severity {
+// traffic, just degrades it (warn); a LAN port that's up but below its
+// healthy negotiated speed or showing CRC errors is also degraded (warn),
+// distinct from fully down (bad) — the "cable degradation" fault's
+// signature. 1000 Mbps is this panel's own healthy-speed reference, kept
+// independent of simulation-engine's default rather than importing it —
+// dashboards has no dependency on simulation-engine.
+export function serviceLayerSeverity(telemetry: ServiceLayerTelemetry): Severity {
   if (!telemetry.lanPort.linkUp.value || !telemetry.dhcpLease.present.value) return "bad";
   if (telemetry.nat.upstreamPresent.value && telemetry.nat.customerSidePresent.value) return "warn";
+  if (telemetry.lanPort.linkSpeedMbps.value < 1000 || telemetry.lanPort.crcErrorCount.value > 0) return "warn";
   return "good";
 }
 
@@ -126,6 +132,17 @@ export function ServiceLayerPanel({ telemetry }: ServiceLayerPanelProps) {
               label="LAN port"
               value={telemetry.lanPort.linkUp.value ? "Up" : "Down"}
               color={telemetry.lanPort.linkUp.value ? undefined : SEVERITY_COLORS.bad}
+            />
+            <Row
+              label="Link speed"
+              value={`${telemetry.lanPort.linkSpeedMbps.value} Mbps`}
+              color={telemetry.lanPort.linkSpeedMbps.value < 1000 ? SEVERITY_COLORS.warn : undefined}
+            />
+            <Row label="Duplex" value={telemetry.lanPort.duplex.value === "full" ? "Full" : "Half"} />
+            <Row
+              label="CRC errors"
+              value={String(telemetry.lanPort.crcErrorCount.value)}
+              color={telemetry.lanPort.crcErrorCount.value > 0 ? SEVERITY_COLORS.warn : undefined}
             />
           </div>
         </div>

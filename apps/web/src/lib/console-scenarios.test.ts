@@ -14,13 +14,7 @@ const ALL_KEYS: ScenarioKey[] = [
   "wrongBootOrder",
 ];
 
-const RADIO_LINK_FAULT_SCENARIOS: ScenarioKey[] = [
-  "windMisalignment",
-  "rainFade",
-  "cableDegradation",
-  "foliageGrowth",
-  "interference",
-];
+const RADIO_LINK_FAULT_SCENARIOS: ScenarioKey[] = ["windMisalignment", "rainFade", "foliageGrowth", "interference"];
 
 describe("console scenarios", () => {
   it("defines exactly the 10 named scenarios", () => {
@@ -33,6 +27,13 @@ describe("console scenarios", () => {
       expect(def.local?.scenario?.faults?.length, `${key} should have a LOCAL fault`).toBeGreaterThan(0);
       expect(def.remote?.scenario?.faults, `${key} should not touch REMOTE`).toBeUndefined();
     }
+  });
+
+  it("Cable Degradation is a service-layer fault that leaves the radio link untouched", () => {
+    const def = SCENARIOS.cableDegradation;
+    expect(def.serviceLayer?.scenario?.faults?.length).toBeGreaterThan(0);
+    expect(def.local?.scenario?.faults ?? []).toHaveLength(0);
+    expect(def.remote?.scenario?.faults ?? []).toHaveLength(0);
   });
 
   it("Wrong Boot Order sets a service-layer fault and a low LOCAL baseUptimeSeconds", () => {

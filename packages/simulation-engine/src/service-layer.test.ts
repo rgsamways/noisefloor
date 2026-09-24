@@ -6,6 +6,7 @@ import {
   doubleNatFault,
   customerRouterOfflineFault,
   wrongBootOrderFault,
+  cableDegradationFault,
   type ServiceLayerConfig,
 } from "./service-layer.js";
 
@@ -99,6 +100,30 @@ describe("simulateServiceLayer — customer router offline", () => {
     expect(snapshot.addressing.wanAddress.value).toBe(healthy.addressing.wanAddress.value);
     expect(snapshot.nat.upstreamPresent.value).toBe(healthy.nat.upstreamPresent.value);
     expect(snapshot.nat.customerSidePresent.value).toBe(healthy.nat.customerSidePresent.value);
+  });
+});
+
+describe("simulateServiceLayer — cable degradation", () => {
+  it("shows a degraded-but-connected LAN port and leaves everything else at its healthy baseline", () => {
+    const healthy = simulateServiceLayer(config(), 10);
+    const scenario = { faults: [cableDegradationFault(0)] };
+    const snapshot = simulateServiceLayer(config({ scenario }), 10);
+
+    expect(snapshot.lanPort.linkUp.value).toBe(true);
+    expect(snapshot.lanPort.linkSpeedMbps.value).toBeLessThan(healthy.lanPort.linkSpeedMbps.value);
+    expect(snapshot.lanPort.crcErrorCount.value).toBeGreaterThan(0);
+    expect(snapshot.dhcpLease.present.value).toBe(healthy.dhcpLease.present.value);
+    expect(snapshot.addressing.wanAddress.value).toBe(healthy.addressing.wanAddress.value);
+    expect(snapshot.nat.upstreamPresent.value).toBe(healthy.nat.upstreamPresent.value);
+  });
+
+  it("does not require or affect any RadioLinkTelemetry value", () => {
+    // Type-level: ServiceLayerConfig/cableDegradationFault take no
+    // RadioLinkTelemetry or simulateRadioLink value at all — this is a
+    // runtime smoke test that the function still resolves without one.
+    const scenario = { faults: [cableDegradationFault(0)] };
+    const snapshot = simulateServiceLayer({ baseTimeIso, scenario }, 10);
+    expect(snapshot.lanPort.crcErrorCount.value).toBeGreaterThan(0);
   });
 });
 

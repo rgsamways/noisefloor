@@ -22,6 +22,9 @@ export type ServiceLayerOverrides = {
   natUpstreamPresent: boolean;
   natCustomerSidePresent: boolean;
   lanPortLinkUp: boolean;
+  lanPortLinkSpeedMbps: number;
+  lanPortDuplex: "full" | "half";
+  lanPortCrcErrorCount: number;
 };
 
 export type ServiceLayerFault = {
@@ -66,6 +69,10 @@ export function simulateServiceLayer(config: ServiceLayerConfig, atSec: number):
   const natUpstreamPresent = overrides.natUpstreamPresent ?? false;
   const natCustomerSidePresent = overrides.natCustomerSidePresent ?? true;
   const lanPortLinkUp = overrides.lanPortLinkUp ?? true;
+  // Healthy defaults match modern gigabit-capable CPE gear with a clean run.
+  const lanPortLinkSpeedMbps = overrides.lanPortLinkSpeedMbps ?? 1000;
+  const lanPortDuplex = overrides.lanPortDuplex ?? "full";
+  const lanPortCrcErrorCount = overrides.lanPortCrcErrorCount ?? 0;
 
   const reading = <T>(value: T) => readingAt(value, config.baseTimeIso, atSec);
 
@@ -88,6 +95,9 @@ export function simulateServiceLayer(config: ServiceLayerConfig, atSec: number):
     },
     lanPort: {
       linkUp: reading(lanPortLinkUp),
+      linkSpeedMbps: reading(lanPortLinkSpeedMbps),
+      duplex: reading(lanPortDuplex),
+      crcErrorCount: reading(lanPortCrcErrorCount),
     },
   };
 }
@@ -119,6 +129,22 @@ export function customerRouterOfflineFault(triggerAtSec: number): ServiceLayerFa
   return {
     triggerAtSec,
     overrides: { lanPortLinkUp: false },
+  };
+}
+
+// Field-confirmed: "the cable" in fixed-wireless is the Ethernet/PoE run
+// from the radio down to the injector and router, not an RF path — a
+// degrading run falls back to a lower negotiated speed (the classic tell:
+// still full duplex, just slower) and shows climbing CRC/FCS errors, while
+// the link itself stays up and every RF field stays clean. crcErrorCount
+// is a fixed elevated value once triggered, not a live-climbing counter —
+// this engine's discrete-override mechanism has no continuous math (see
+// design.md's Risks); a fixed nonzero count still teaches "errors are
+// present," just not their growth over time.
+export function cableDegradationFault(triggerAtSec: number): ServiceLayerFault {
+  return {
+    triggerAtSec,
+    overrides: { lanPortLinkSpeedMbps: 100, lanPortCrcErrorCount: 480 },
   };
 }
 

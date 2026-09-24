@@ -21,17 +21,17 @@ The system SHALL define exactly these named scenarios, each built from existing 
 - **THEN** all ten named scenarios SHALL appear as selectable options
 
 ### Requirement: Radio-link fault scenarios apply to the CPE/LOCAL side
-For each of Wind Misalignment, Rain Fade, Cable Degradation, Foliage Growth, and Interference, selecting the scenario SHALL apply that fault to the LOCAL (CPE) radio-link configuration and leave the REMOTE (sector) side healthy.
+For each of Wind Misalignment, Rain Fade, Foliage Growth, and Interference, selecting the scenario SHALL apply that fault to the LOCAL (CPE) radio-link configuration and leave the REMOTE (sector) side healthy.
 
 #### Scenario: Selecting a radio-link fault scenario
-- **WHEN** a visitor selects one of the five radio-link fault scenarios
+- **WHEN** a visitor selects one of the four radio-link fault scenarios
 - **THEN** the LOCAL column SHALL reflect that fault's configured effect, and the REMOTE column SHALL remain healthy
 
 ### Requirement: Service-layer fault scenarios leave the radio link healthy except Wrong Boot Order
-For Expired Lease, Double NAT, and Customer Router Offline, selecting the scenario SHALL apply that fault to the service-layer configuration while both LOCAL and REMOTE radio-link readings stay healthy.
+For Expired Lease, Double NAT, Customer Router Offline, and Cable Degradation, selecting the scenario SHALL apply that fault to the service-layer configuration while both LOCAL and REMOTE radio-link readings stay healthy.
 
 #### Scenario: Selecting a service-layer fault scenario
-- **WHEN** a visitor selects Expired Lease, Double NAT, or Customer Router Offline
+- **WHEN** a visitor selects Expired Lease, Double NAT, Customer Router Offline, or Cable Degradation
 - **THEN** the service-layer panel SHALL reflect that fault, and both radio-link columns SHALL remain healthy
 
 ### Requirement: Wrong Boot Order reproduces its cross-panel signature
@@ -48,12 +48,12 @@ Selecting Healthy SHALL configure LOCAL, REMOTE, and the service layer with no f
 - **WHEN** a visitor selects Healthy
 - **THEN** both radio-link columns and the service-layer panel SHALL show no fault-driven degradation
 
-### Requirement: Cable Degradation's severity badge is unaffected by design
-Selecting Cable Degradation SHALL widen the LOCAL column's chain-imbalance reading without changing its overall severity badge, matching the fault's existing designed behavior — this is accepted, documented behavior, not a defect to mask.
+### Requirement: Cable Degradation degrades the service-layer LAN port, not the radio link
+Selecting Cable Degradation SHALL reduce the service-layer panel's LAN-port link speed and show a nonzero CRC error count, while leaving the LAN port marked up and leaving both radio-link columns (signal, SNR, chain readings, severity badge) at their healthy values.
 
 #### Scenario: Selecting Cable Degradation
-- **WHEN** a visitor selects Cable Degradation
-- **THEN** the LOCAL column's chain readings SHALL show a widened imbalance, and the LOCAL column's severity badge SHALL remain at its healthy color
+- **WHEN** a visitor selects the Cable Degradation scenario
+- **THEN** the service-layer panel's LAN port SHALL show a reduced link speed and a nonzero CRC error count while remaining marked up, and both LOCAL and REMOTE radio-link columns SHALL show no fault-driven degradation
 
 ### Requirement: The scenario picker is scoped to /console only
 The homepage's demo panel SHALL NOT display or be affected by the scenario picker; it SHALL continue rendering its own fixed scenario regardless of what has been selected on `/console`.
