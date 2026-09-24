@@ -14,15 +14,28 @@ const ALL_KEYS: ScenarioKey[] = [
   "wrongBootOrder",
 ];
 
-const RADIO_LINK_FAULT_SCENARIOS: ScenarioKey[] = ["windMisalignment", "rainFade", "foliageGrowth", "interference"];
+// Symmetric per openspec/changes/archive/2026-09-24-add-noise-floor-fault-axis:
+// Misalignment/Rain Fade/Foliage Growth degrade both directions roughly
+// equally in real fixed-wireless, so they apply to LOCAL and REMOTE alike.
+// Interference is local to each receiver and stays LOCAL-only.
+const SYMMETRIC_RADIO_LINK_FAULT_SCENARIOS: ScenarioKey[] = ["windMisalignment", "rainFade", "foliageGrowth"];
+const LOCAL_ONLY_RADIO_LINK_FAULT_SCENARIOS: ScenarioKey[] = ["interference"];
 
 describe("console scenarios", () => {
   it("defines exactly the 10 named scenarios", () => {
     expect(Object.keys(SCENARIOS).sort()).toEqual([...ALL_KEYS].sort());
   });
 
-  it("puts every radio-link fault on the LOCAL (CPE) side, not REMOTE", () => {
-    for (const key of RADIO_LINK_FAULT_SCENARIOS) {
+  it("puts Misalignment/Rain Fade/Foliage Growth on both LOCAL and REMOTE", () => {
+    for (const key of SYMMETRIC_RADIO_LINK_FAULT_SCENARIOS) {
+      const def = SCENARIOS[key];
+      expect(def.local?.scenario?.faults?.length, `${key} should have a LOCAL fault`).toBeGreaterThan(0);
+      expect(def.remote?.scenario?.faults?.length, `${key} should have a REMOTE fault too`).toBeGreaterThan(0);
+    }
+  });
+
+  it("puts Interference on LOCAL only, not REMOTE", () => {
+    for (const key of LOCAL_ONLY_RADIO_LINK_FAULT_SCENARIOS) {
       const def = SCENARIOS[key];
       expect(def.local?.scenario?.faults?.length, `${key} should have a LOCAL fault`).toBeGreaterThan(0);
       expect(def.remote?.scenario?.faults, `${key} should not touch REMOTE`).toBeUndefined();
