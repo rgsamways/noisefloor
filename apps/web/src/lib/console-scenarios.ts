@@ -44,24 +44,40 @@ export type ScenarioDefinition = {
   serviceLayer?: Partial<ServiceLayerConfig>;
 };
 
-// Radio-link faults all apply to the LOCAL (CPE) side — see
-// demo-link-telemetry.ts's comment on why LOCAL is the CPE. REMOTE (the
-// sector) and the service layer stay healthy unless a scenario says
-// otherwise.
+// Radio-link faults apply to the LOCAL (CPE) side — see
+// demo-link-telemetry.ts's comment on why LOCAL is the CPE — and also to
+// REMOTE for the three faults whose real signature is symmetric (Wind
+// Misalignment, Rain Fade, Foliage Growth). Interference stays LOCAL-only,
+// matching its real one-sided-per-receiver behavior. The service layer
+// stays healthy unless a scenario says otherwise.
 export const SCENARIOS: Record<ScenarioKey, ScenarioDefinition> = {
   healthy: {
     label: "Healthy",
   },
   windMisalignment: {
     label: "Wind misalignment",
-    local: { scenario: { faults: [windMisalignmentFault(TRIGGERED_IN_PAST_SEC)] } },
+    // Real misalignment degrades both directions roughly equally (the
+    // tower hears the CPE worse too) — see
+    // docs/t1-wireless-troubleshooting-scenarios.md §1. Applying the same
+    // fault array to both configs needs no engine-level symmetry
+    // mechanism; each side computes its own dB delta from its own
+    // baseline (design.md's Decision 5).
+    local: { scenario: { faults: [...windMisalignmentFault(TRIGGERED_IN_PAST_SEC)] } },
+    remote: { scenario: { faults: [...windMisalignmentFault(TRIGGERED_IN_PAST_SEC)] } },
   },
   rainFade: {
     label: "Rain fade",
     // holdSec is set far longer than any realistic browsing session so the
     // fault (which does recover, unlike the others) reads as steady rain
     // rather than clearing mid-visit.
+    // Symmetric LOCAL+REMOTE application — see windMisalignment's comment
+    // above; rain attenuates the path itself, affecting both ends equally.
     local: {
+      scenario: {
+        faults: [rainFadeFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100, holdSec: 10_000_000, recoverSec: 100 })],
+      },
+    },
+    remote: {
       scenario: {
         faults: [rainFadeFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100, holdSec: 10_000_000, recoverSec: 100 })],
       },
@@ -69,7 +85,10 @@ export const SCENARIOS: Record<ScenarioKey, ScenarioDefinition> = {
   },
   foliageGrowth: {
     label: "Foliage growth",
+    // Symmetric LOCAL+REMOTE application — see windMisalignment's comment
+    // above; foliage in the path attenuates both directions equally.
     local: { scenario: { faults: [foliageGrowthFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100 })] } },
+    remote: { scenario: { faults: [foliageGrowthFault(TRIGGERED_IN_PAST_SEC, { rampSec: 100 })] } },
   },
   interference: {
     label: "Interference",

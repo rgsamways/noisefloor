@@ -34,7 +34,9 @@ export type IntermittentCycleFault = {
   startAtSec: number;
   cyclePeriodSec: number;
   activeDurationSec: number;
-  target: "linkHealth";
+  // "noiseFloorDbm": interference's real signature — noise rises, signal
+  // stays put — unlike "linkHealth", which drops signal (see design.md).
+  target: "linkHealth" | "noiseFloorDbm";
   delta: number;
 };
 
@@ -43,15 +45,16 @@ export type FaultDefinition = StepFault | RampRecoverFault | RampPersistFault | 
 export type FaultEffect = {
   linkHealthDelta: number;
   chainImbalanceDeltaDb: number;
+  noiseFloorDeltaDb: number;
 };
 
-const NO_EFFECT: FaultEffect = { linkHealthDelta: 0, chainImbalanceDeltaDb: 0 };
+const NO_EFFECT: FaultEffect = { linkHealthDelta: 0, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: 0 };
 
 function stepEffectAt(fault: StepFault, atSec: number): FaultEffect {
   if (atSec < fault.startAtSec) return NO_EFFECT;
   return fault.target === "linkHealth"
-    ? { linkHealthDelta: fault.delta, chainImbalanceDeltaDb: 0 }
-    : { linkHealthDelta: 0, chainImbalanceDeltaDb: fault.delta };
+    ? { linkHealthDelta: fault.delta, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: 0 }
+    : { linkHealthDelta: 0, chainImbalanceDeltaDb: fault.delta, noiseFloorDeltaDb: 0 };
 }
 
 function rampRecoverEffectAt(fault: RampRecoverFault, atSec: number): FaultEffect {
@@ -72,7 +75,7 @@ function rampRecoverEffectAt(fault: RampRecoverFault, atSec: number): FaultEffec
   } else {
     frac = 0;
   }
-  return { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0 };
+  return { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: 0 };
 }
 
 // Ramps in over rampSec like rampRecoverEffectAt's ramp phase, then holds
@@ -83,8 +86,8 @@ function rampPersistEffectAt(fault: RampPersistFault, atSec: number): FaultEffec
   if (t < 0) return NO_EFFECT;
   const frac = fault.rampSec === 0 ? 1 : Math.min(1, t / fault.rampSec);
   return fault.target === "linkHealth"
-    ? { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0 }
-    : { linkHealthDelta: 0, chainImbalanceDeltaDb: fault.delta * frac };
+    ? { linkHealthDelta: fault.delta * frac, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: 0 }
+    : { linkHealthDelta: 0, chainImbalanceDeltaDb: fault.delta * frac, noiseFloorDeltaDb: 0 };
 }
 
 // A hard on/off gate repeating every cyclePeriodSec — active (full effect)
@@ -95,7 +98,9 @@ function intermittentCycleEffectAt(fault: IntermittentCycleFault, atSec: number)
   if (t < 0) return NO_EFFECT;
   const phase = t % fault.cyclePeriodSec;
   if (phase >= fault.activeDurationSec) return NO_EFFECT;
-  return { linkHealthDelta: fault.delta, chainImbalanceDeltaDb: 0 };
+  return fault.target === "linkHealth"
+    ? { linkHealthDelta: fault.delta, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: 0 }
+    : { linkHealthDelta: 0, chainImbalanceDeltaDb: 0, noiseFloorDeltaDb: fault.delta };
 }
 
 export function faultEffectAt(fault: FaultDefinition, atSec: number): FaultEffect {
@@ -117,6 +122,7 @@ export function combinedFaultEffect(faults: readonly FaultDefinition[], atSec: n
     return {
       linkHealthDelta: acc.linkHealthDelta + effect.linkHealthDelta,
       chainImbalanceDeltaDb: acc.chainImbalanceDeltaDb + effect.chainImbalanceDeltaDb,
+      noiseFloorDeltaDb: acc.noiseFloorDeltaDb + effect.noiseFloorDeltaDb,
     };
   }, NO_EFFECT);
 }
@@ -128,8 +134,24 @@ export function combinedFaultEffect(faults: readonly FaultDefinition[], atSec: n
 // roughly 5 dB or more, and it stays that way rather than self-correcting.
 // Default `toDb` of 6 clears that threshold even against a small healthy
 // baseline chain imbalance.
-export function windMisalignmentFault(startAtSec: number, opts: { toDb?: number } = {}): StepFault {
-  return { shape: "step", startAtSec, target: "chainImbalanceDb", delta: opts.toDb ?? 6 };
+//
+// Real misalignment's primary tell is a signal/SNR step-down that stays
+// down with noise floor unchanged (docs/t1-wireless-troubleshooting-
+// scenarios.md §1) — chain imbalance is real but secondary/corroborating.
+// Returns both co-triggered steps rather than one, reusing
+// combinedFaultEffect's existing multi-fault summing instead of inventing
+// a fault shape that targets two fields at once. Default `magnitude` of
+// 0.25 (~12 dB via SIGNAL_DB_PER_HEALTH_UNIT) approximates the doc's own
+// -58 to -72 dBm (14 dB) example; not itself field-confirmed as an exact
+// number.
+export function windMisalignmentFault(
+  startAtSec: number,
+  opts: { toDb?: number; magnitude?: number } = {},
+): StepFault[] {
+  return [
+    { shape: "step", startAtSec, target: "linkHealth", delta: -(opts.magnitude ?? 0.25) },
+    { shape: "step", startAtSec, target: "chainImbalanceDb", delta: opts.toDb ?? 6 },
+  ];
 }
 
 // Real rain fade duration tracks how long the rain lasts — minutes to
@@ -171,6 +193,15 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 // cyclePeriodSec defaults to a day; every other parameter is
 // caller-supplied since "often" isn't "always." No per-cycle jitter in
 // this pass — deferred as a follow-up (design.md), not built here.
+//
+// Targets noiseFloorDbm, not linkHealth: real interference's signature is
+// noise rising while signal stays put (docs/t1-wireless-troubleshooting-
+// scenarios.md §4) — the opposite of Wind Misalignment/Rain Fade/Foliage
+// Growth, which all degrade signal with noise floor unchanged. `magnitude`
+// is now a direct dB rise, not a 0-1 linkHealth fraction (which had no
+// meaning on this axis); default 15 dB against a ~-92 dBm clean baseline
+// is a guess, not field-confirmed — revisit if a real ticket's numbers
+// differ.
 export function interferenceFault(
   startAtSec: number,
   opts: { cyclePeriodSec?: number; activeDurationSec: number; magnitude?: number },
@@ -180,7 +211,7 @@ export function interferenceFault(
     startAtSec,
     cyclePeriodSec: opts.cyclePeriodSec ?? SECONDS_PER_DAY,
     activeDurationSec: opts.activeDurationSec,
-    target: "linkHealth",
-    delta: -(opts.magnitude ?? 0.35),
+    target: "noiseFloorDbm",
+    delta: opts.magnitude ?? 15,
   };
 }

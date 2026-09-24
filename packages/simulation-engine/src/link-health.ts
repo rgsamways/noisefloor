@@ -31,13 +31,24 @@ export function deriveLinkGroup(
   baseline: LinkBaseline,
   chainImbalanceDeltaDb: number,
   rng: () => number,
+  noiseFloorDeltaDb = 0,
 ): LinkGroupValues {
   const deficit = baseline.linkHealth - health; // >= 0 once a fault degrades health
   const signalDbm = baseline.signalDbm - deficit * SIGNAL_DB_PER_HEALTH_UNIT + jitter(rng, 0.5);
-  const noiseFloorDbm = NOISE_FLOOR_DBM + jitter(rng, 1);
+  const noiseFloorDbm = NOISE_FLOOR_DBM + noiseFloorDeltaDb + jitter(rng, 1);
   const snrDb = signalDbm - noiseFloorDbm;
-  const linkQualityPct = clamp(Math.round(health * 100), 0, 100);
-  const modulationIndex = clamp(Math.round(health * 9), 0, 9);
+
+  // linkQualityPct/modulationIndex react to SNR loss regardless of whether
+  // it came from signal dropping (health) or noise floor rising
+  // (noiseFloorDeltaDb) — see design.md's Decision 4. snrDeficitDb folds
+  // both sources onto the same dB scale via SIGNAL_DB_PER_HEALTH_UNIT, the
+  // same conversion the signal axis already uses; snrHealth collapses to
+  // `health` exactly when noiseFloorDeltaDb is 0 (every fault except
+  // Interference), so this is a no-op for existing signal-axis faults.
+  const snrDeficitDb = deficit * SIGNAL_DB_PER_HEALTH_UNIT + noiseFloorDeltaDb;
+  const snrHealth = clamp(baseline.linkHealth - snrDeficitDb / SIGNAL_DB_PER_HEALTH_UNIT, 0, 1);
+  const linkQualityPct = clamp(Math.round(snrHealth * 100), 0, 100);
+  const modulationIndex = clamp(Math.round(snrHealth * 9), 0, 9);
   const chainImbalanceDb = Math.max(0, BASE_CHAIN_IMBALANCE_DB + jitter(rng, 0.3) + chainImbalanceDeltaDb);
 
   return {

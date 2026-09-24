@@ -34,7 +34,7 @@ describe("simulateRadioLink — healthy baseline", () => {
 
 describe("simulateRadioLink — wind misalignment", () => {
   it("steps chainImbalanceDb to roughly 5 dB or greater and keeps it there", () => {
-    const scenario = { faults: [windMisalignmentFault(60)] };
+    const scenario = { faults: [...windMisalignmentFault(60)] };
     const before = simulateRadioLink(config({ scenario }), 30);
     const justAfter = simulateRadioLink(config({ scenario }), 60);
     const longAfter = simulateRadioLink(config({ scenario }), 60_000);
@@ -42,6 +42,18 @@ describe("simulateRadioLink — wind misalignment", () => {
     expect(before.link.chainImbalanceDb.value).toBeLessThan(5);
     expect(justAfter.link.chainImbalanceDb.value).toBeGreaterThanOrEqual(5);
     expect(longAfter.link.chainImbalanceDb.value).toBeGreaterThanOrEqual(5);
+  });
+
+  it("also steps signal/SNR down and stays down, while noise floor is unaffected", () => {
+    const scenario = { faults: [...windMisalignmentFault(60)] };
+    const before = simulateRadioLink(config({ scenario }), 30);
+    const justAfter = simulateRadioLink(config({ scenario }), 60);
+    const longAfter = simulateRadioLink(config({ scenario }), 60_000);
+
+    expect(justAfter.link.signalDbm.value).toBeLessThan(before.link.signalDbm.value);
+    expect(justAfter.link.snrDb.value).toBeLessThan(before.link.snrDb.value);
+    expect(longAfter.link.signalDbm.value).toBeLessThan(before.link.signalDbm.value);
+    expect(Math.abs(longAfter.link.noiseFloorDbm.value - before.link.noiseFloorDbm.value)).toBeLessThan(2);
   });
 });
 
@@ -100,13 +112,15 @@ describe("simulateRadioLink — foliage growth", () => {
 });
 
 describe("simulateRadioLink — interference", () => {
-  it("degrades only during active windows and matches healthy baseline outside them", () => {
+  it("raises noise floor (not signal) during active windows and matches healthy baseline outside them", () => {
     const scenario = { faults: [interferenceFault(0, { activeDurationSec: 3 * 60 * 60 })] }; // 3h/day active
     const healthy = simulateRadioLink(config(), -1);
     const duringWindow = simulateRadioLink(config({ scenario }), 60 * 60); // 1h in, inside the window
     const outsideWindow = simulateRadioLink(config({ scenario }), 12 * 60 * 60); // well outside the window
 
-    expect(duringWindow.link.signalDbm.value).toBeLessThan(healthy.link.signalDbm.value);
-    expect(Math.abs(outsideWindow.link.signalDbm.value - healthy.link.signalDbm.value)).toBeLessThan(2);
+    expect(duringWindow.link.noiseFloorDbm.value).toBeGreaterThan(healthy.link.noiseFloorDbm.value);
+    expect(Math.abs(duringWindow.link.signalDbm.value - healthy.link.signalDbm.value)).toBeLessThan(2);
+    expect(duringWindow.link.linkQualityPct.value).toBeLessThan(healthy.link.linkQualityPct.value);
+    expect(Math.abs(outsideWindow.link.noiseFloorDbm.value - healthy.link.noiseFloorDbm.value)).toBeLessThan(2);
   });
 });

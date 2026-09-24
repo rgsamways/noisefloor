@@ -128,3 +128,24 @@ describe("intermittentCycle fault", () => {
     expect(combinedFaultEffect([fault], 250).linkHealthDelta).toBe(0); // 250 % 100 = 50
   });
 });
+
+describe("intermittentCycle fault targeting noiseFloorDbm", () => {
+  const fault: IntermittentCycleFault = {
+    shape: "intermittentCycle",
+    startAtSec: 0,
+    cyclePeriodSec: 100,
+    activeDurationSec: 20,
+    target: "noiseFloorDbm",
+    delta: 15,
+  };
+
+  it("produces noiseFloorDeltaDb, not linkHealthDelta, during its active window", () => {
+    const effect = combinedFaultEffect([fault], 10);
+    expect(effect.noiseFloorDeltaDb).toBeCloseTo(15);
+    expect(effect.linkHealthDelta).toBe(0);
+  });
+
+  it("has no effect outside its active window", () => {
+    expect(combinedFaultEffect([fault], 50).noiseFloorDeltaDb).toBe(0);
+  });
+});

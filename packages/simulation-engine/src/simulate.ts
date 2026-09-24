@@ -46,7 +46,7 @@ export function simulateRadioLink(config: SimulationConfig, atSec: number): Radi
   // depend on call order (design.md's "pure function of time" goal).
   const rng = createRng(`${config.seed}:${effectiveAtSec}`);
 
-  const link = deriveLinkGroup(health, baseline, effect.chainImbalanceDeltaDb, rng);
+  const link = deriveLinkGroup(health, baseline, effect.chainImbalanceDeltaDb, rng, effect.noiseFloorDeltaDb);
   const throughput = deriveThroughputGroup(health, rng);
   const farEnd = deriveFarEndGroup(health, config.linkProfile, rng);
   const radioHealth = deriveRadioHealthGroup(baseUptimeSeconds, effectiveAtSec, rng);
