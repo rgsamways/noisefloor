@@ -1,0 +1,44 @@
+## Context
+
+See proposal.md for motivation. Current pipeline (`packages/kb`): `scripts/generate-articles.mjs` parses markdown+frontmatter content files into `src/generated-articles.js` (`generate` script), `tsc` builds, then `dist/validate-articles.js` re-validates every generated article against `KbArticleSchema` plus a duplicate-slug check, failing the build loudly on either (`validate-articles.ts`'s own comment: "belt-and-suspenders against `scripts/generate-articles.mjs`'s duplicated schema drifting out of sync"). `apps/web` imports the already-parsed `articles` array directly (`@noisefloor/kb`'s `index.ts` re-exports `generated-articles.js`, deliberately not `parse.js`, to keep the Node-only `gray-matter` dependency out of the browser bundle — this bit the KB once already, per `project_noisefloor_kb_decision` memory). `KbIndex.tsx`/`KbArticleDetail.tsx` render that array directly, client-side, with no server or database involved anywhere in the KB.
+
+## Goals / Non-Goals
+
+**Goals:**
+- Lock the `KbArticle` shape (fields, category enum, validated `relatedFields`/`icon`) before the large glossary-authoring effort starts.
+- Make `relatedFields` a real, build-time-checked hook other features (a future console "what is this?" affordance) can rely on, not just a label.
+- Add search/category browsing without adding a backend — the KB has never had one and doesn't need one for this.
+
+**Non-Goals:**
+- Authoring the full glossary. This change ships the schema/UI plus a ~10-15 article pilot batch; the rest is a follow-up.
+- A technical/layman toggle that persists user preference across visits (e.g. via localStorage) — default behavior only for now; revisit if Robin wants that later.
+- Any console-side "what is this?" affordance that actually uses the now-resolvable `relatedFields` to deep-link from a live reading — this change only makes `relatedFields` resolvable; wiring the console UI to consume it is separate, unscoped work.
+
+## Decisions
+
+**1. `category` is a fixed Zod enum, not a free string.** The 13 groupings drafted in conversation (RF fundamentals, frequency & spectrum, modulation/PHY & capacity, antennas & RF hardware, radios/mounts & field hardware, network topology & architecture, ethernet/PoE & cabling, IP networking & addressing, NAT/routing & service layer, protocols & management, diagnostics/monitoring & metrics, environmental & propagation effects, operations/install & process) become a `z.enum([...])` in `schema.ts`.
+*Alternative considered:* free-form string with a separate "known categories" list for the UI to render filter chips from. Rejected — a typo'd category silently creates an orphan filter bucket instead of failing the build, the same failure mode the KB already treats as unacceptable for slugs.
+
+**2. `relatedFields` validates against real `@noisefloor/console-schema` field paths, in dotted `group.field` form (e.g. `link.snrDb`, `throughput.airtimePct`, `serviceLayer.lanPort.crcErrorCount`).** `packages/kb` gains a build-time-only dependency on `@noisefloor/console-schema` (already used the same way `packages/kb` already depends on `zod`); `validate-articles.ts` derives the full set of valid dotted paths by walking `RadioLinkTelemetrySchema`/`ServiceLayerTelemetrySchema`'s shape once, and rejects any `relatedFields` entry not in that set.
+*Alternative considered:* flat field names without a group prefix (today's test fixtures use `"linkQualityPct"`, not `"link.linkQualityPct"`). Rejected — flat names are unambiguous only by accident (no two groups currently share a field name), and `serviceLayer`'s nested sub-objects (`lanPort.crcErrorCount`, `dhcpLease.present`) can't be expressed flatly at all. Dotted paths are unambiguous by construction.
+
+**3. `icon` is a kebab-case name validated against `lucide-react/dynamic`'s `iconNames`, and rendered via its `<DynamicIcon>` component.** `packages/kb` gains a build-time-only dependency on `lucide-react` (`icon-validation.ts` checks against `iconNames`, lucide-react's own canonical kebab-case name list); `apps/web`'s `KbArticleDetail.tsx` renders the icon with `<DynamicIcon name={article.icon} />` from `lucide-react/dynamic`.
+*Alternative considered (tried first, measured, rejected):* a plain `import * as LucideIcons from "lucide-react"` namespace import, indexed by a hand-rolled kebab→PascalCase conversion. This works but defeats tree-shaking — Rollup can't prove which of the ~2100 icon exports a runtime string lookup will use, so it bundles all of them. Measured directly: this added ~750KB raw / ~190KB gzip to `apps/web`'s production bundle (607KB → 1.36MB) for a KB feature most visitors won't even use. `lucide-react/dynamic`'s `<DynamicIcon>` is Lucide's own documented solution for exactly this "icon chosen by data, not by static import" case — each icon becomes its own on-demand chunk (verified: bundle came back down to 744KB, with the `dynamicIconImports` manifest itself accounting for the remaining ~137KB over the zero-icon baseline). No validation would also have been an option (trust the author) but was rejected regardless of which rendering approach won — a typo'd icon name should fail the build, not silently render nothing.
+
+**4. Search is client-side, over the already-bundled `articles` array — no new build-time index file.** `articles` is already fully loaded into the `apps/web` bundle (`generated-articles.js` → `@noisefloor/kb`'s `index.ts` → `KbIndex.tsx`). A `useMemo`'d Fuse.js instance over `articles` (keyed on `title`, `summary`, `aliases`) is the entire "search index" — there's nothing to generate or persist separately.
+*Alternative considered:* a separate lightweight JSON search-index artifact generated alongside `generated-articles.js`. Rejected as unnecessary duplication — the full article set is already in memory client-side; a second derived artifact would just be the same data reshaped, with its own staleness risk if the two ever generate out of step.
+
+**5. Detail page shows both explanations via a tab/toggle, defaulting to `laymanExplanation`.** A first-time visitor is more likely to want the plain-language version first; a switch reveals `technicalExplanation`. Both render through the same `Markdown` component already used for `body` today.
+*Alternative considered:* always show both stacked, layman then technical. Rejected for this pass — once `technicalExplanation` bodies get detailed (RF math, protocol specifics), always-stacked risks making every article page very long by default; a toggle keeps the default view short. Revisit if Robin finds the toggle itself annoying once real content exists.
+
+**6. The one existing placeholder article is migrated in this change, not left on the old `body` field.** `packages/kb/content/placeholder.md`'s single body becomes its `technicalExplanation`, with a newly authored `laymanExplanation`, `category`, and (optionally) `icon`/`aliases` added — keeps the content set internally consistent with zero stragglers on the old shape.
+
+## Risks / Trade-offs
+
+- **[Risk]** `category`'s fixed enum will inevitably need a 14th (or more) value once real authoring surfaces a concept that doesn't fit the drafted 13. → **Mitigation**: adding an enum value is a one-line, non-breaking change to `schema.ts`; not worth over-engineering a more flexible taxonomy against a hypothetical future need (per the project's "don't design for hypothetical future requirements" norm).
+- **[Risk]** Splitting `body` into two required fields is a breaking schema change with exactly one existing article affected today — low risk now, but would be much higher-cost if deferred until after the full glossary is authored on the old shape. → **Mitigation**: this is precisely why the proposal sequences the schema change before glossary authoring, not after.
+- **[Risk]** Validating `relatedFields` against console-schema field paths creates a real coupling: `packages/kb`'s build now fails if `@noisefloor/console-schema` renames or removes a field an article references. → **Mitigation**: acceptable and arguably desirable — a stale `relatedFields` reference is exactly the kind of drift build-time validation should catch, consistent with how `validate-articles.ts` already treats slug collisions and schema violations as build failures, not warnings.
+
+## Migration Plan
+
+No database, no runtime API — this is a content-schema and static-site change. Order: land the schema/validation change in `packages/kb` first (migrating the one placeholder article in the same commit so the build stays green), then the `apps/web` UI changes, then author the pilot batch against the finished schema/UI. Deploy via the existing manual `vercel --prod` once `pnpm --filter @noisefloor/kb build` and `apps/web`'s build both pass — same rebuild discipline as any other workspace-package change (memory `feedback_typecheck_not_build`).

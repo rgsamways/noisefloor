@@ -1,9 +1,4 @@
-# knowledge-base Specification
-
-## Purpose
-Defines the content contract for standalone knowledge-base (KB) reference articles — definitions and concepts a fixed-wireless tech needs to read the console — and the public routes that present them, independent of cases or console schema state.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: KbArticle records validate against a fixed structure
 A `KbArticle` SHALL require `id`, `slug`, `title`, `summary` (a one- or two-sentence definition), `technicalExplanation` (the full technical explanation), `laymanExplanation` (the full plain-language explanation), and `category` (one of a fixed set of topic groupings). `slug` SHALL be unique across all articles and URL-safe. `category` SHALL be one of the fixed enum values; any other value SHALL fail validation.
@@ -61,19 +56,21 @@ Requesting a KB article by its `slug` SHALL return that article's full `technica
 - **WHEN** any visitor requests a KB article by a `slug` with no matching `KbArticle`
 - **THEN** the system SHALL return a not-found result
 
+## ADDED Requirements
+
 ### Requirement: KbArticle's optional icon must be a real Lucide icon name
-A `KbArticle` MAY optionally carry an `icon` field naming a Lucide icon, in the kebab-case form `lucide-react`'s own canonical icon name list uses (e.g. `"radio-tower"`). When present, validation SHALL reject an `icon` value that does not appear in that canonical name list. Omitting `icon` SHALL NOT affect validity.
+A `KbArticle` MAY optionally carry an `icon` field naming a Lucide icon. When present, validation SHALL reject an `icon` value that does not correspond to an actual exported icon in the `lucide-react` package. Omitting `icon` SHALL NOT affect validity.
 
 #### Scenario: An article with no icon still validates
 - **WHEN** a `KbArticle` object with no `icon` field is validated
 - **THEN** it SHALL be accepted
 
 #### Scenario: A valid Lucide icon name passes validation
-- **WHEN** a `KbArticle` sets `icon` to a name that appears in `lucide-react`'s canonical icon name list
+- **WHEN** a `KbArticle` sets `icon` to a name that corresponds to a real exported icon in `lucide-react`
 - **THEN** validation SHALL accept the article
 
 #### Scenario: An unrecognized icon name fails validation
-- **WHEN** a `KbArticle` sets `icon` to a name that does not appear in `lucide-react`'s canonical icon name list
+- **WHEN** a `KbArticle` sets `icon` to a name that does not correspond to any exported icon in `lucide-react`
 - **THEN** validation SHALL reject the article with an error identifying the invalid icon name
 
 ### Requirement: The KB index supports searching articles by name, summary, and alias
