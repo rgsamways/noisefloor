@@ -111,6 +111,7 @@ describe("simulateServiceLayer — cable degradation", () => {
 
     expect(snapshot.lanPort.linkUp.value).toBe(true);
     expect(snapshot.lanPort.linkSpeedMbps.value).toBeLessThan(healthy.lanPort.linkSpeedMbps.value);
+    expect(snapshot.lanPort.duplex.value).toBe("half");
     expect(snapshot.lanPort.crcErrorCount.value).toBeGreaterThan(0);
     expect(snapshot.dhcpLease.present.value).toBe(healthy.dhcpLease.present.value);
     expect(snapshot.addressing.wanAddress.value).toBe(healthy.addressing.wanAddress.value);

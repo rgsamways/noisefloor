@@ -134,17 +134,22 @@ export function customerRouterOfflineFault(triggerAtSec: number): ServiceLayerFa
 
 // Field-confirmed: "the cable" in fixed-wireless is the Ethernet/PoE run
 // from the radio down to the injector and router, not an RF path — a
-// degrading run falls back to a lower negotiated speed (the classic tell:
-// still full duplex, just slower) and shows climbing CRC/FCS errors, while
-// the link itself stays up and every RF field stays clean. crcErrorCount
-// is a fixed elevated value once triggered, not a live-climbing counter —
-// this engine's discrete-override mechanism has no continuous math (see
-// design.md's Risks); a fixed nonzero count still teaches "errors are
-// present," just not their growth over time.
+// degrading run falls back to a lower negotiated speed and shows climbing
+// CRC/FCS errors, while the link itself stays up and every RF field stays
+// clean. Falls back to half duplex, not full — a real suspected-degraded-
+// cable ticket showed "100 Mbps-Half," not "100 Mbps-Full" as first
+// assumed here; half duplex on modern gigabit-capable gear is itself
+// close to always a sign of a bad negotiation, a stronger self-explanatory
+// tell than the raw speed number alone. This is one observed case, not a
+// confirmed pattern yet — revisit if more real tickets show otherwise.
+// crcErrorCount is a fixed elevated value once triggered, not a
+// live-climbing counter — this engine's discrete-override mechanism has
+// no continuous math (see design.md's Risks); a fixed nonzero count still
+// teaches "errors are present," just not their growth over time.
 export function cableDegradationFault(triggerAtSec: number): ServiceLayerFault {
   return {
     triggerAtSec,
-    overrides: { lanPortLinkSpeedMbps: 100, lanPortCrcErrorCount: 480 },
+    overrides: { lanPortLinkSpeedMbps: 100, lanPortDuplex: "half", lanPortCrcErrorCount: 480 },
   };
 }
 
