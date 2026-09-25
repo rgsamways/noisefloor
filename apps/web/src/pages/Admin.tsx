@@ -31,11 +31,14 @@ function GroupsSection() {
     try {
       await apiFetch("/api/admin/groups", { method: "POST", body: JSON.stringify({ name: newGroupName.trim() }) });
       setNewGroupName("");
-      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to create group");
     } finally {
+      // Reload on failure too — a 409 conflict means the list is already
+      // stale (someone else created that name first), so show the real
+      // current state rather than leave it looking like nothing changed.
       setCreating(false);
+      reload();
     }
   }
 
@@ -101,9 +104,11 @@ function UsersSection() {
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  function reload() {
     apiFetch<AdminUser[]>("/api/admin/users").then(setUsers, (err) => setError(err.message));
-  }, []);
+  }
+
+  useEffect(reload, []);
 
   async function toggleSiteAdmin(target: AdminUser) {
     setSavingId(target.id);
@@ -116,6 +121,10 @@ function UsersSection() {
       setUsers((prev) => prev?.map((u) => (u.id === updated.id ? updated : u)) ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to update user");
+      // Reload on failure too — whatever this view thought was true
+      // when it loaded may no longer be, so show the real current
+      // state rather than leave the stale pre-click value displayed.
+      reload();
     } finally {
       setSavingId(null);
     }

@@ -39,11 +39,15 @@ export function AdminGroup() {
       });
       setInviteEmail("");
       setInviteTier("");
-      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to invite");
     } finally {
+      // Reload on failure too, not just success — e.g. a 409 conflict
+      // means someone else already has whatever access this invite
+      // attempted to grant, which is exactly the current, real state
+      // this view should reflect rather than sit stale on.
       setInviting(false);
+      reload();
     }
   }
 
@@ -52,9 +56,14 @@ export function AdminGroup() {
     setError(null);
     try {
       await apiFetch(`/api/admin/groups/${groupId}/invitations/${id}`, { method: "DELETE" });
-      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to cancel invitation");
+    } finally {
+      // Also reload on a 404 "already accepted" — the invitee accepted
+      // between page load and this click, so this view was already
+      // stale before the click; the fix is showing the real state now,
+      // not leaving it stuck on "pending" until a manual refresh.
+      reload();
     }
   }
 
@@ -63,9 +72,10 @@ export function AdminGroup() {
     setError(null);
     try {
       await apiFetch(`/api/admin/groups/${groupId}/memberships/${membershipId}/revoke`, { method: "PATCH" });
-      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to revoke membership");
+    } finally {
+      reload();
     }
   }
 
