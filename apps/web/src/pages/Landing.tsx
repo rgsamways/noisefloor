@@ -4,6 +4,7 @@ import { LinkPanel } from "@noisefloor/dashboards";
 import { ContentFooterLinks } from "../components/ContentFooterLinks";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
+import { authClient } from "../lib/auth-client";
 import { useDemoLinkTelemetry } from "../lib/demo-link-telemetry";
 
 const MUTED = "#5a726e";
@@ -34,6 +35,7 @@ const FEATURES = [
 // Prove pillars) — see openspec/changes/homepage-conversion.
 export function Landing() {
   const { local, remote } = useDemoLinkTelemetry();
+  const { data: session } = authClient.useSession();
 
   return (
     <HudPageShell>
@@ -43,9 +45,15 @@ export function Landing() {
             <Activity size={18} aria-hidden="true" style={{ color: ACCENT }} />
             <span>noisefloor</span>
           </div>
-          <Link to="/sign-in" className="text-[13px]" style={{ color: MUTED }}>
-            Sign in
-          </Link>
+          {session ? (
+            <Link to="/me" className="text-[13px]" style={{ color: MUTED }}>
+              Welcome, {session.user.name || session.user.email}
+            </Link>
+          ) : (
+            <Link to="/sign-in" className="text-[13px]" style={{ color: MUTED }}>
+              Sign in
+            </Link>
+          )}
         </div>
 
         <div className="mt-5 grid grid-cols-1 items-start gap-12 md:grid-cols-2 md:gap-16">
