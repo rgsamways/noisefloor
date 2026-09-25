@@ -11,13 +11,13 @@ const LINE = "#1c2a2e";
 const MUTED = "#5a726e";
 const ACCENT = "#3dffc4";
 
-// "The floor" for the public HUD pages (Home, Console, KB) — see
-// homepage/homepage-laptop.html/-phone.html and docs/mockups/
-// noisefloor-mock-kb-index.html for the design this makes real. A
-// separate component from BottomNav.tsx on purpose: that one serves the
-// still-light-themed, auth-gated pages (/me, /cases) and stays untouched.
-// No "Me" item here — account access is a top-strip concern on the
-// homepage, not this nav's job (openspec/changes/hud-shell-nav design.md).
+// "The floor" for the HUD pages — see homepage/homepage-laptop.html/-phone.html
+// and docs/mockups/noisefloor-mock-kb-index.html for the design this makes
+// real. A separate component from BottomNav.tsx on purpose: that one still
+// serves the light-themed, auth-gated pages that haven't moved to the HUD
+// shell yet (/cases). No "Me" item here — account access is a top-strip
+// concern on the homepage (the Welcome link), not this nav's job
+// (openspec/changes/hud-shell-nav design.md).
 export function HudFloorNav() {
   const { pathname } = useLocation();
 

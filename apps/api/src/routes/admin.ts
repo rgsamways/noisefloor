@@ -1,9 +1,10 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { entities, groupInvitations, groupMemberships, groups } from "../db/permissions-schema.js";
+import { eodReports } from "../db/schema.js";
 import { getSession } from "../lib/get-session.js";
 import { sendInviteEmail } from "../lib/send-invite-email.js";
 import { requireSiteAdmin } from "../lib/site-admin.js";
@@ -289,5 +290,22 @@ export async function adminRoute(app: FastifyInstance) {
 
     await db.delete(user).where(eq(user.id, request.params.id));
     return reply.status(204).send();
+  });
+
+  app.get<{ Params: { userId: string } }>("/api/admin/eod-reports/:userId", { preHandler: requireSiteAdmin }, async (request) => {
+    return db
+      .select({
+        id: eodReports.id,
+        reportDate: eodReports.reportDate,
+        tickets: eodReports.tickets,
+        devicesRefurbished: eodReports.devicesRefurbished,
+        packages: eodReports.packages,
+        calls: eodReports.calls,
+        other: eodReports.other,
+        userEmail: eodReports.userEmail,
+      })
+      .from(eodReports)
+      .where(eq(eodReports.userId, request.params.userId))
+      .orderBy(desc(eodReports.reportDate));
   });
 }

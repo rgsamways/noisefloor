@@ -5,6 +5,7 @@ import { SessionSync } from "./components/SessionSync";
 import { About } from "./pages/About";
 import { Admin } from "./pages/Admin";
 import { AdminGroup } from "./pages/AdminGroup";
+import { AdminUserReports } from "./pages/AdminUserReports";
 import { CasePlayer } from "./pages/CasePlayer";
 import { Cases } from "./pages/Cases";
 import { Console } from "./pages/Console";
@@ -37,6 +38,7 @@ export function App() {
           <Route element={<RequireSiteAdmin />}>
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/groups/:groupId" element={<AdminGroup />} />
+            <Route path="/admin/users/:userId/reports" element={<AdminUserReports />} />
           </Route>
         </Route>
         {/* Dev-only, per NOISEFLOOR-OUTLINE.md §8 — import.meta.env.DEV is

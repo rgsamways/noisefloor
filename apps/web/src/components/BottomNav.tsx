@@ -1,17 +1,17 @@
-import { BookOpen, Home, TriangleAlert, User } from "lucide-react";
+import { BookOpen, Home, TriangleAlert } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", Icon: Home },
   { to: "/cases", label: "Cases", Icon: BookOpen },
   { to: "/gotchas", label: "Gotchas", Icon: TriangleAlert },
-  { to: "/me", label: "Me", Icon: User },
 ] as const;
 
 // "The floor" — persistent bottom nav, per homepage/DESIGN-NOTES.md. One
 // component covers both layouts: the laptop/phone mockups share the same
-// four items and icons, only spacing, the two side captions, and the
+// items and icons, only spacing, the two side captions, and the
 // grid-vs-flex arrangement differ, all expressible as breakpoint classes.
+// No "Me" item — reaching /me is via the Welcome message link instead.
 export function BottomNav() {
   const { pathname } = useLocation();
 
@@ -25,7 +25,7 @@ export function BottomNav() {
 
         <nav
           aria-label="Primary"
-          className="grid h-16 flex-1 grid-cols-4 items-end gap-0 md:mx-auto md:flex md:flex-none md:gap-14"
+          className="grid h-16 flex-1 grid-cols-3 items-end gap-0 md:mx-auto md:flex md:flex-none md:gap-14"
         >
           {NAV_ITEMS.map(({ to, label, Icon }) => {
             const active = pathname === to;

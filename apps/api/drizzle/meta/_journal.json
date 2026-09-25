@@ -36,6 +36,13 @@
       "when": 1790302592824,
       "tag": "0004_lowly_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790304965936,
+      "tag": "0005_lazy_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

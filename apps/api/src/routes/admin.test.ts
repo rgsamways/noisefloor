@@ -4,6 +4,7 @@ import { buildApp } from "../app.js";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { entities, groupInvitations, groupMemberships, groups } from "../db/permissions-schema.js";
+import { eodReports } from "../db/schema.js";
 import { createTestSession } from "../test-utils/auth.js";
 
 async function makeSiteAdmin(app: ReturnType<typeof buildApp>) {
@@ -393,6 +394,39 @@ describe("admin routes", () => {
 
       const [reloaded] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId));
       expect(reloaded).toBeDefined();
+    });
+  });
+
+  describe("GET /api/admin/eod-reports/:userId", () => {
+    it("lets a siteAdmin read another user's filed reports", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const { email: targetEmail, cleanup: targetCleanup } = await createTestSession(app);
+      cleanups.push(targetCleanup);
+      const [targetUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, targetEmail));
+      const targetUserId = targetUser!.id;
+      const [report] = await db
+        .insert(eodReports)
+        .values({ userId: targetUserId, userEmail: targetEmail, reportDate: "2026-09-25", tickets: "fixed a radio" })
+        .returning();
+      cleanups.push(async () => {
+        await db.delete(eodReports).where(eq(eodReports.id, report!.id));
+      });
+
+      const response = await app.inject({ method: "GET", url: `/api/admin/eod-reports/${targetUserId}`, headers: { cookie } });
+      expect(response.statusCode).toBe(200);
+      const body = response.json() as Array<{ tickets: string }>;
+      expect(body[0]?.tickets).toBe("fixed a radio");
+    });
+
+    it("rejects a non-siteAdmin caller", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: "/api/admin/eod-reports/some-user-id", headers: { cookie } });
+      expect(response.statusCode).toBe(403);
     });
   });
 });

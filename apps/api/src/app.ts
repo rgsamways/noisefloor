@@ -5,6 +5,7 @@ import { attemptsRoute } from "./routes/attempts.js";
 import { authRoute } from "./routes/auth.js";
 import { casesRoute } from "./routes/cases.js";
 import { contactRoute } from "./routes/contact.js";
+import { eodReportsRoute } from "./routes/eod-reports.js";
 import { healthRoute } from "./routes/health.js";
 import { sessionRoute } from "./routes/session.js";
 import { env } from "./env.js";
@@ -25,5 +26,6 @@ export function buildApp() {
   app.register(contactRoute);
   app.register(adminRoute);
   app.register(sessionRoute);
+  app.register(eodReportsRoute);
   return app;
 }

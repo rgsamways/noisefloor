@@ -203,6 +203,7 @@ function UsersSection() {
                 Site admin
               </th>
               <th className="border-b pb-2 text-right font-normal" style={{ borderColor: LINE }} />
+              <th className="border-b pb-2 text-right font-normal" style={{ borderColor: LINE }} />
             </tr>
           </thead>
           <tbody>
@@ -242,6 +243,15 @@ function UsersSection() {
                   >
                     {u.siteAdmin ? "Yes" : "No"}
                   </button>
+                </td>
+                <td className="border-b py-2 text-right" style={{ borderColor: LINE }}>
+                  <Link
+                    to={`/admin/users/${u.id}/reports`}
+                    className="border px-2 py-1 text-[12px]"
+                    style={{ borderColor: LINE, color: MUTED }}
+                  >
+                    Reports
+                  </Link>
                 </td>
                 <td className="border-b py-2 text-right" style={{ borderColor: LINE }}>
                   <button

@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { date, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
 
 // Users and attempts only — case content lives in packages/cases, not the
@@ -48,4 +48,28 @@ export const gotchaProgress = pgTable(
     seenCount: integer("seen_count").notNull().default(1),
   },
   (table) => [primaryKey({ columns: [table.userId, table.gotchaId] })],
+);
+
+// Deliberately no FK to `user` — a filed report is historical work
+// record and must survive its author's account being hard-deleted later
+// (see openspec/changes/archive/add-eod-reports design.md's Decision 1,
+// following manage-user-accounts' own forward-looking note about this).
+// `userEmail` is a snapshot taken at write time so old reports stay
+// attributable even after the account is gone or renamed.
+export const eodReports = pgTable(
+  "eod_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    userEmail: text("user_email").notNull(),
+    reportDate: date("report_date", { mode: "string" }).notNull(),
+    tickets: text("tickets").notNull().default(""),
+    devicesRefurbished: text("devices_refurbished").notNull().default(""),
+    packages: text("packages").notNull().default(""),
+    calls: text("calls").notNull().default(""),
+    other: text("other").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("eod_reports_user_date_idx").on(table.userId, table.reportDate)],
 );
