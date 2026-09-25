@@ -198,7 +198,6 @@ export function Me() {
   const [deviceRows, setDeviceRows] = useState<DeviceRow[]>([]);
   const [packageRows, setPackageRows] = useState<PackageRow[]>([]);
   const [contactRows, setContactRows] = useState<ContactRow[]>([]);
-  const [siteMode, setSiteMode] = useState<Mode>("freeform");
   const [recent, setRecent] = useState<Report[] | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -208,19 +207,27 @@ export function Me() {
   }
 
   useEffect(reloadRecent, []);
-  useEffect(() => {
-    apiFetch<{ mode: Mode }>("/api/eod-report-mode").then(
-      (r) => setSiteMode(r.mode),
-      () => {},
-    );
-  }, []);
 
   useEffect(() => {
+    let cancelled = false;
     setStatus("loading");
     setError(null);
-    fetchReportForDate(apiUrl, date).then(
-      (report) => {
-        const resolvedMode = report?.mode ?? siteMode;
+
+    async function load() {
+      try {
+        const report = await fetchReportForDate(apiUrl, date);
+        // The site's current mode is only fetched when actually needed —
+        // a brand-new date with no existing report — and fetched fresh at
+        // that moment, not from separately-fetched state. Reading it from
+        // a `siteMode` state set by its own independent effect raced
+        // against this effect on first mount: if this one resolved first,
+        // it read that state's still-default "freeform" instead of
+        // whatever had actually just loaded, so a fresh report could
+        // silently get created in the wrong mode even right after a
+        // siteAdmin switched the site to structured.
+        const resolvedMode = report?.mode ?? (await apiFetch<{ mode: Mode }>("/api/eod-report-mode")).mode;
+        if (cancelled) return;
+
         setMode(resolvedMode);
         setFields(
           report
@@ -233,16 +240,16 @@ export function Me() {
         setPackageRows(report?.packageRows ?? []);
         setContactRows(report?.contactRows ?? []);
         setStatus("idle");
-      },
-      (err) => {
+      } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : "failed to load report");
         setStatus("error");
-      },
-    );
-    // Only re-resolve on a date change, not every time siteMode refetches —
-    // siteMode only matters for a brand-new report's initial mode, decided
-    // once when this effect runs for that date, not re-decided afterward.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [date, apiUrl]);
 
   async function save() {
