@@ -1,10 +1,12 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import { adminRoute } from "./routes/admin.js";
 import { attemptsRoute } from "./routes/attempts.js";
 import { authRoute } from "./routes/auth.js";
 import { casesRoute } from "./routes/cases.js";
 import { contactRoute } from "./routes/contact.js";
 import { healthRoute } from "./routes/health.js";
+import { sessionRoute } from "./routes/session.js";
 import { env } from "./env.js";
 
 export function buildApp() {
@@ -21,5 +23,7 @@ export function buildApp() {
   app.register(casesRoute);
   app.register(attemptsRoute);
   app.register(contactRoute);
+  app.register(adminRoute);
+  app.register(sessionRoute);
   return app;
 }

@@ -1,6 +1,9 @@
 import { Route, Routes } from "react-router";
 import { RequireAuth } from "./components/RequireAuth";
+import { RequireSiteAdmin } from "./components/RequireSiteAdmin";
 import { About } from "./pages/About";
+import { Admin } from "./pages/Admin";
+import { AdminGroup } from "./pages/AdminGroup";
 import { CasePlayer } from "./pages/CasePlayer";
 import { Cases } from "./pages/Cases";
 import { Console } from "./pages/Console";
@@ -28,6 +31,10 @@ export function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/cases" element={<Cases />} />
         <Route path="/cases/:slug" element={<CasePlayer />} />
+        <Route element={<RequireSiteAdmin />}>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/groups/:groupId" element={<AdminGroup />} />
+        </Route>
       </Route>
       {/* Dev-only, per NOISEFLOOR-OUTLINE.md §8 — import.meta.env.DEV is
           statically known at build time, so Vite tree-shakes this whole
