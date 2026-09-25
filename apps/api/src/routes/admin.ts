@@ -5,6 +5,7 @@ import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { entities, groupInvitations, groupMemberships, groups } from "../db/permissions-schema.js";
 import { eodReports } from "../db/schema.js";
+import { getEodReportMode, setEodReportMode } from "../lib/eod-report-mode.js";
 import { getSession } from "../lib/get-session.js";
 import { sendInviteEmail } from "../lib/send-invite-email.js";
 import { requireSiteAdmin } from "../lib/site-admin.js";
@@ -30,6 +31,7 @@ const UpdateMembershipBody = z.object({
   tier: z.string().nullable().optional(),
   rules: z.array(z.string()).optional(),
 });
+const UpdateSettingsBody = z.object({ eodReportMode: z.enum(["freeform", "structured"]) });
 const UpdateUserBody = z.object({
   name: z.string().min(1).optional(),
   title: z.string().nullable().optional(),
@@ -297,15 +299,32 @@ export async function adminRoute(app: FastifyInstance) {
       .select({
         id: eodReports.id,
         reportDate: eodReports.reportDate,
+        mode: eodReports.mode,
         tickets: eodReports.tickets,
         devicesRefurbished: eodReports.devicesRefurbished,
         packages: eodReports.packages,
         calls: eodReports.calls,
         other: eodReports.other,
+        ticketRows: eodReports.ticketRows,
+        deviceRows: eodReports.deviceRows,
+        packageRows: eodReports.packageRows,
+        contactRows: eodReports.contactRows,
         userEmail: eodReports.userEmail,
       })
       .from(eodReports)
       .where(eq(eodReports.userId, request.params.userId))
       .orderBy(desc(eodReports.reportDate));
+  });
+
+  app.get("/api/admin/settings", { preHandler: requireSiteAdmin }, async () => {
+    return { eodReportMode: await getEodReportMode() };
+  });
+
+  app.patch("/api/admin/settings", { preHandler: requireSiteAdmin }, async (request, reply) => {
+    const parsed = UpdateSettingsBody.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: "invalid body" });
+
+    await setEodReportMode(parsed.data.eodReportMode);
+    return { eodReportMode: parsed.data.eodReportMode };
   });
 }

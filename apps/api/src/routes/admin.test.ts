@@ -429,4 +429,11 @@ describe("admin routes", () => {
       expect(response.statusCode).toBe(403);
     });
   });
+
+  // GET/PATCH /api/admin/settings is tested in eod-reports.test.ts, not
+  // here — it mutates the same shared `entities.eodReportMode` singleton
+  // row that eod-reports.test.ts's structured-mode tests do, and vitest
+  // only serializes tests *within* a file by default; splitting them
+  // across files reintroduces the exact cross-file race that grouping
+  // them avoids.
 });

@@ -7,11 +7,18 @@ import { user } from "./auth-schema.js";
 // per-tenant resolution, since there is no per-entity business database
 // to route to. See openspec/changes/add-entity-group-permissions design.md.
 
+// One site-wide setting, not a dedicated settings table — there's exactly
+// one entity, already resolved server-side by admin.ts's resolveEntityId()
+// for the same reason (openspec/changes/archive/add-eod-report-modes
+// design.md's Decision 1).
+export const eodReportModeEnum = pgEnum("eod_report_mode", ["freeform", "structured"]);
+
 export const entities = pgTable("entities", {
   id: uuid("id").primaryKey().defaultRandom(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   name: text("name").notNull(),
+  eodReportMode: eodReportModeEnum("eod_report_mode").notNull().default("freeform"),
 });
 
 export const groups = pgTable(

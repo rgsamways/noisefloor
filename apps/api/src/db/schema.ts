@@ -1,5 +1,6 @@
 import { date, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
+import { eodReportModeEnum } from "./permissions-schema.js";
 
 // Users and attempts only — case content lives in packages/cases, not the
 // DB (NOISEFLOOR-OUTLINE.md §10). `caseId`/`stageId`/`gotchaId` are plain
@@ -50,12 +51,29 @@ export const gotchaProgress = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.gotchaId] })],
 );
 
+// Row shapes for the structured-mode jsonb columns below — see
+// openspec/changes/archive/add-eod-report-modes design.md's Decision 3
+// (jsonb arrays, not normalized child tables: nothing queries across
+// rows yet) and Decision 4a ("calls" broadened to "Customer contacts",
+// covering phone or email, without renaming the underlying field).
+export type TicketRow = { ticketNumber: string; customer: string; summary: string; status: string };
+export type DeviceRow = { deviceType: string; serialId: string; notes: string };
+export type PackageRow = { direction: "mailed" | "accepted"; description: string; tracking: string };
+export type ContactRow = { customer: string; method: "phone" | "email"; contact: string; reason: string; outcome: string };
+
 // Deliberately no FK to `user` — a filed report is historical work
 // record and must survive its author's account being hard-deleted later
 // (see openspec/changes/archive/add-eod-reports design.md's Decision 1,
 // following manage-user-accounts' own forward-looking note about this).
 // `userEmail` is a snapshot taken at write time so old reports stay
 // attributable even after the account is gone or renamed.
+//
+// `mode` is stamped at save time and never changes on later edits of the
+// same report — a report always renders and re-saves in the mode it was
+// first filed under, regardless of what the site-wide setting is by the
+// time it's reopened (design.md's Decision 2). The five text columns are
+// used exclusively in `freeform` mode; the four jsonb row-array columns
+// are used exclusively in `structured` mode — never both on one row.
 export const eodReports = pgTable(
   "eod_reports",
   {
@@ -63,11 +81,16 @@ export const eodReports = pgTable(
     userId: text("user_id").notNull(),
     userEmail: text("user_email").notNull(),
     reportDate: date("report_date", { mode: "string" }).notNull(),
+    mode: eodReportModeEnum("mode").notNull().default("freeform"),
     tickets: text("tickets").notNull().default(""),
     devicesRefurbished: text("devices_refurbished").notNull().default(""),
     packages: text("packages").notNull().default(""),
     calls: text("calls").notNull().default(""),
     other: text("other").notNull().default(""),
+    ticketRows: jsonb("ticket_rows").$type<TicketRow[]>(),
+    deviceRows: jsonb("device_rows").$type<DeviceRow[]>(),
+    packageRows: jsonb("package_rows").$type<PackageRow[]>(),
+    contactRows: jsonb("contact_rows").$type<ContactRow[]>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
