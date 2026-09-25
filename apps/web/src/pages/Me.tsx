@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { HudDatePicker } from "../components/HudDatePicker";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 import { apiFetch } from "../lib/api";
@@ -108,14 +109,7 @@ export function Me() {
             <h2 className="text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>
               End of day report
             </h2>
-            <input
-              type="date"
-              value={date}
-              max={todayLocal()}
-              onChange={(e) => setDate(e.target.value)}
-              className="border bg-transparent px-2 py-1 text-[13px] outline-none"
-              style={{ borderColor: LINE, color: TEXT }}
-            />
+            <HudDatePicker value={date} onChange={setDate} max={todayLocal()} />
           </div>
 
           <div className="flex flex-col gap-3">
