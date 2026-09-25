@@ -8,6 +8,9 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   name: text("name").notNull(),
   image: text("image"),
+  // Free-text role label (e.g. "T1", "Network Admin") — admin-editable,
+  // unrelated to siteRules (which is enforcement-facing).
+  title: text("title"),
   // Global cross-entity access flag, not a group membership row — mirrors
   // kerfy's kerfyAdmin. Bypasses every site-wide and group-scoped rule
   // check everywhere (see openspec/changes/add-entity-group-permissions).

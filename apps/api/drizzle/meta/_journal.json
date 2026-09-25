@@ -29,6 +29,13 @@
       "when": 1790296894348,
       "tag": "0003_bumpy_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790302592824,
+      "tag": "0004_lowly_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,7 @@ const MUTED = "#5a726e";
 const ACCENT = "#3dffc4";
 
 type GroupSummary = { id: string; name: string; memberCount: number };
-type AdminUser = { id: string; name: string; email: string; siteAdmin: boolean; siteRules: string[] };
+type AdminUser = { id: string; name: string; title: string | null; email: string; siteAdmin: boolean; siteRules: string[] };
 
 function GroupsSection() {
   const [groups, setGroups] = useState<GroupSummary[] | null>(null);
@@ -130,6 +130,50 @@ function UsersSection() {
     }
   }
 
+  function updateLocalField(id: string, field: "name" | "title", value: string) {
+    setUsers((prev) => prev?.map((u) => (u.id === id ? { ...u, [field]: value } : u)) ?? null);
+  }
+
+  async function saveField(id: string, field: "name" | "title", rawValue: string) {
+    const value = rawValue.trim();
+    if (field === "name" && !value) return;
+    setSavingId(id);
+    setError(null);
+    try {
+      // Deliberately not applying the response back into `users` on
+      // success: local state already reflects the typed value (from
+      // updateLocalField), and doing so here raced against editing a
+      // second field on the same row — this PATCH's response, carrying
+      // whatever the *other* field's value was at request time, could
+      // land after the user had already started typing that other
+      // field and stomp it back to the stale value.
+      await apiFetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: field === "title" ? value || null : value }),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `failed to update ${field}`);
+      reload();
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function deleteUser(target: AdminUser) {
+    if (!window.confirm(`Permanently delete ${target.email}? This cannot be undone.`)) return;
+    setSavingId(target.id);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/users/${target.id}`, { method: "DELETE" });
+      setUsers((prev) => prev?.filter((u) => u.id !== target.id) ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "failed to delete user");
+      reload();
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   return (
     <section className="border p-4" style={{ borderColor: LINE, background: "rgba(255,255,255,0.015)" }}>
       <h2 className="mb-3 text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>
@@ -150,18 +194,40 @@ function UsersSection() {
                 Name
               </th>
               <th className="border-b pb-2 font-normal" style={{ borderColor: LINE }}>
+                Title
+              </th>
+              <th className="border-b pb-2 font-normal" style={{ borderColor: LINE }}>
                 Email
               </th>
               <th className="border-b pb-2 text-right font-normal" style={{ borderColor: LINE }}>
                 Site admin
               </th>
+              <th className="border-b pb-2 text-right font-normal" style={{ borderColor: LINE }} />
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
               <tr key={u.id}>
-                <td className="border-b py-2" style={{ borderColor: LINE, color: TEXT }}>
-                  {u.name}
+                <td className="border-b py-2" style={{ borderColor: LINE }}>
+                  <input
+                    type="text"
+                    value={u.name}
+                    onChange={(e) => updateLocalField(u.id, "name", e.target.value)}
+                    onBlur={(e) => saveField(u.id, "name", e.target.value)}
+                    className="w-full bg-transparent outline-none"
+                    style={{ color: TEXT }}
+                  />
+                </td>
+                <td className="border-b py-2" style={{ borderColor: LINE }}>
+                  <input
+                    type="text"
+                    value={u.title ?? ""}
+                    onChange={(e) => updateLocalField(u.id, "title", e.target.value)}
+                    onBlur={(e) => saveField(u.id, "title", e.target.value)}
+                    placeholder="—"
+                    className="w-full bg-transparent outline-none"
+                    style={{ color: TEXT }}
+                  />
                 </td>
                 <td className="border-b py-2" style={{ borderColor: LINE, color: TEXT }}>
                   {u.email}
@@ -175,6 +241,17 @@ function UsersSection() {
                     style={{ borderColor: u.siteAdmin ? ACCENT : LINE, color: u.siteAdmin ? ACCENT : MUTED }}
                   >
                     {u.siteAdmin ? "Yes" : "No"}
+                  </button>
+                </td>
+                <td className="border-b py-2 text-right" style={{ borderColor: LINE }}>
+                  <button
+                    type="button"
+                    onClick={() => deleteUser(u)}
+                    disabled={savingId === u.id}
+                    className="border px-2 py-1 text-[12px] disabled:opacity-40"
+                    style={{ borderColor: LINE, color: "#f87171" }}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>

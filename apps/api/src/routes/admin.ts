@@ -30,9 +30,26 @@ const UpdateMembershipBody = z.object({
   rules: z.array(z.string()).optional(),
 });
 const UpdateUserBody = z.object({
+  name: z.string().min(1).optional(),
+  title: z.string().nullable().optional(),
   siteAdmin: z.boolean().optional(),
   siteRules: z.array(z.string()).optional(),
 });
+
+// Guards the siteAdmin-toggle PATCH against self-demoting the last
+// siteAdmin (design.md's Decision 1) — the only reachable way to zero
+// out siteAdmin, since a delete can't: the caller is always a siteAdmin
+// distinct from a delete target (self-delete is blocked separately), so
+// the caller alone always keeps the post-delete count at least 1.
+// Counts every *other* siteAdmin, so it correctly allows demoting
+// someone else while a different siteAdmin still exists.
+async function wouldRemoveLastSiteAdmin(excludingUserId: string): Promise<boolean> {
+  const [remaining] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(user)
+    .where(and(eq(user.siteAdmin, true), sql`${user.id} != ${excludingUserId}`));
+  return Number(remaining?.count ?? 0) === 0;
+}
 
 export async function adminRoute(app: FastifyInstance) {
   app.get("/api/admin/groups", { preHandler: requireSiteAdmin }, async () => {
@@ -212,7 +229,14 @@ export async function adminRoute(app: FastifyInstance) {
 
   app.get("/api/admin/users", { preHandler: requireSiteAdmin }, async () => {
     return db
-      .select({ id: user.id, name: user.name, email: user.email, siteAdmin: user.siteAdmin, siteRules: user.siteRules })
+      .select({
+        id: user.id,
+        name: user.name,
+        title: user.title,
+        email: user.email,
+        siteAdmin: user.siteAdmin,
+        siteRules: user.siteRules,
+      })
       .from(user)
       .orderBy(user.email);
   });
@@ -224,7 +248,13 @@ export async function adminRoute(app: FastifyInstance) {
     const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.id, request.params.id));
     if (!existing) return reply.status(404).send({ error: "user not found" });
 
-    const update: { siteAdmin?: boolean; siteRules?: string[] } = {};
+    if (parsed.data.siteAdmin === false && (await wouldRemoveLastSiteAdmin(request.params.id))) {
+      return reply.status(409).send({ error: "cannot remove the last siteAdmin" });
+    }
+
+    const update: { name?: string; title?: string | null; siteAdmin?: boolean; siteRules?: string[] } = {};
+    if (parsed.data.name !== undefined) update.name = parsed.data.name;
+    if (parsed.data.title !== undefined) update.title = parsed.data.title;
     if (parsed.data.siteAdmin !== undefined) update.siteAdmin = parsed.data.siteAdmin;
     if (parsed.data.siteRules !== undefined) update.siteRules = parsed.data.siteRules;
 
@@ -232,7 +262,32 @@ export async function adminRoute(app: FastifyInstance) {
       .update(user)
       .set(update)
       .where(eq(user.id, request.params.id))
-      .returning({ id: user.id, name: user.name, email: user.email, siteAdmin: user.siteAdmin, siteRules: user.siteRules });
+      .returning({
+        id: user.id,
+        name: user.name,
+        title: user.title,
+        email: user.email,
+        siteAdmin: user.siteAdmin,
+        siteRules: user.siteRules,
+      });
     return updated;
+  });
+
+  // No last-siteAdmin check here: the caller is always a siteAdmin
+  // (requireSiteAdmin) distinct from the target (self-delete is blocked
+  // above), so the caller alone always keeps the post-delete count at
+  // least 1 — the guard that matters for deletion is the self-delete
+  // check, not a siteAdmin-count check (see design.md's Decision 1).
+  app.delete<{ Params: { id: string } }>("/api/admin/users/:id", { preHandler: requireSiteAdmin }, async (request, reply) => {
+    const session = await getSession(request);
+    if (session!.user.id === request.params.id) {
+      return reply.status(409).send({ error: "cannot delete your own account" });
+    }
+
+    const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.id, request.params.id));
+    if (!existing) return reply.status(404).send({ error: "user not found" });
+
+    await db.delete(user).where(eq(user.id, request.params.id));
+    return reply.status(204).send();
   });
 }

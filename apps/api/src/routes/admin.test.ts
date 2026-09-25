@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
 import { user } from "../db/auth-schema.js";
@@ -11,6 +11,23 @@ async function makeSiteAdmin(app: ReturnType<typeof buildApp>) {
   const [testUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
   await db.update(user).set({ siteAdmin: true }).where(eq(user.id, testUser!.id));
   return { cookie, email, userId: testUser!.id, cleanup };
+}
+
+// Temporarily demotes every *other* siteAdmin so `userId` becomes the
+// last one — restores their original flag afterward via `cleanups`, so
+// this never permanently touches real siteAdmins from outside the test.
+async function makeOnlySiteAdmin(userId: string, cleanups: Array<() => Promise<void>>) {
+  const others = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.siteAdmin, true), ne(user.id, userId)));
+  if (others.length === 0) return;
+
+  const otherIds = others.map((o) => o.id);
+  await db.update(user).set({ siteAdmin: false }).where(inArray(user.id, otherIds));
+  cleanups.push(async () => {
+    await db.update(user).set({ siteAdmin: true }).where(inArray(user.id, otherIds));
+  });
 }
 
 async function makeGroup(cleanups: Array<() => Promise<void>>, name = `Test Group ${crypto.randomUUID()}`) {
@@ -308,6 +325,74 @@ describe("admin routes", () => {
 
       const [reloaded] = await db.select({ siteAdmin: user.siteAdmin }).from(user).where(eq(user.id, targetUserId));
       expect(reloaded?.siteAdmin).toBe(true);
+    });
+
+    it("updates a user's name and title", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const { userId: targetUserId, cleanup: targetCleanup } = await makeSiteAdmin(app);
+      cleanups.push(targetCleanup);
+
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/api/admin/users/${targetUserId}`,
+        headers: { cookie },
+        payload: { name: "Robin Samways", title: "T1" },
+      });
+      expect(response.statusCode).toBe(200);
+      const body = response.json() as { name: string; title: string };
+      expect(body.name).toBe("Robin Samways");
+      expect(body.title).toBe("T1");
+    });
+
+    it("rejects removing siteAdmin from the last siteAdmin", async () => {
+      const app = buildApp();
+      const { cookie, userId, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      await makeOnlySiteAdmin(userId, cleanups);
+
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/api/admin/users/${userId}`,
+        headers: { cookie },
+        payload: { siteAdmin: false },
+      });
+      expect(response.statusCode).toBe(409);
+
+      const [reloaded] = await db.select({ siteAdmin: user.siteAdmin }).from(user).where(eq(user.id, userId));
+      expect(reloaded?.siteAdmin).toBe(true);
+    });
+  });
+
+  describe("DELETE /api/admin/users/:id", () => {
+    it("deletes a user, cascading their sessions and memberships", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const { userId: targetUserId } = await makeSiteAdmin(app);
+      const group = await makeGroup(cleanups);
+      await db.insert(groupMemberships).values({ userId: targetUserId, groupId: group.id });
+
+      const response = await app.inject({ method: "DELETE", url: `/api/admin/users/${targetUserId}`, headers: { cookie } });
+      expect(response.statusCode).toBe(204);
+
+      const [reloadedUser] = await db.select({ id: user.id }).from(user).where(eq(user.id, targetUserId));
+      expect(reloadedUser).toBeUndefined();
+      const remainingMemberships = await db.select().from(groupMemberships).where(eq(groupMemberships.userId, targetUserId));
+      expect(remainingMemberships).toHaveLength(0);
+    });
+
+    it("rejects deleting your own account", async () => {
+      const app = buildApp();
+      const { cookie, userId, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "DELETE", url: `/api/admin/users/${userId}`, headers: { cookie } });
+      expect(response.statusCode).toBe(409);
+
+      const [reloaded] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId));
+      expect(reloaded).toBeDefined();
     });
   });
 });
