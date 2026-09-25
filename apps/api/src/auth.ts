@@ -23,6 +23,15 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [env.WEB_URL],
+  user: {
+    additionalFields: {
+      // input: false on both — neither is settable via sign-up/update-user;
+      // only server-side code (site-admin.ts, group-invitations.ts) ever
+      // writes them. See openspec/changes/add-entity-group-permissions.
+      siteAdmin: { type: "boolean", required: false, defaultValue: false, input: false },
+      siteRules: { type: "string[]", required: false, defaultValue: [], input: false },
+    },
+  },
   advanced: {
     // sameSite: "none" is the fallback for temporary cross-site domains
     // (harmless once crossSubDomainCookies applies too, since same-site

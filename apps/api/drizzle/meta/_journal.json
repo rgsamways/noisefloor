@@ -15,6 +15,13 @@
       "when": 1789864645296,
       "tag": "0001_light_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790294955061,
+      "tag": "0002_needy_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

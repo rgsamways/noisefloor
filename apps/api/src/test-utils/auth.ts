@@ -8,8 +8,8 @@ import { db } from "../db/client.js";
 // RESEND_API_KEY is unset) to get a genuine, better-auth-signed session
 // cookie for `.inject()` tests, rather than hand-crafting one. Mirrors
 // kerfy's apps/api/src/test-utils/auth.ts.
-export async function createTestSession(app: FastifyInstance) {
-  const email = `test-${crypto.randomUUID()}@example.com`;
+export async function createTestSession(app: FastifyInstance, overrideEmail?: string) {
+  const email = overrideEmail ?? `test-${crypto.randomUUID()}@example.com`;
 
   const logSpy: string[] = [];
   const originalLog = console.log;

@@ -8,6 +8,15 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   name: text("name").notNull(),
   image: text("image"),
+  // Global cross-entity access flag, not a group membership row — mirrors
+  // kerfy's kerfyAdmin. Bypasses every site-wide and group-scoped rule
+  // check everywhere (see openspec/changes/add-entity-group-permissions).
+  siteAdmin: boolean("site_admin").notNull().default(false),
+  // Site-wide rule grants for a non-superadmin user (e.g. someone who can
+  // manage KB content without full siteAdmin) — plain text, not an enum,
+  // so the rule catalog (packages/shared's rules.ts) can grow without a
+  // migration. See design.md's Decision 1.
+  siteRules: text("site_rules").array().notNull().default([]),
 });
 
 export const session = pgTable("session", {
