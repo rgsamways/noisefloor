@@ -21,6 +21,7 @@ import { Roadmap } from "./pages/Roadmap";
 import { SignIn } from "./pages/SignIn";
 import { SiteSettings } from "./pages/SiteSettings";
 import { Tickets } from "./pages/Tickets";
+import { UserProfile } from "./pages/UserProfile";
 import { UsersAndGroups } from "./pages/UsersAndGroups";
 
 export function App() {
@@ -49,6 +50,7 @@ export function App() {
             <Route path="/admin/customers" element={<Customers />} />
             <Route path="/admin/settings" element={<SiteSettings />} />
             <Route path="/admin/groups/:groupId" element={<AdminGroup />} />
+            <Route path="/admin/users/:userId" element={<UserProfile />} />
             <Route path="/admin/users/:userId/reports" element={<AdminUserReports />} />
           </Route>
         </Route>

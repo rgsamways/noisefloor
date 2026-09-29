@@ -545,6 +545,78 @@ describe("admin routes", () => {
     });
   });
 
+  describe("GET /api/admin/users/:id", () => {
+    it("rejects unauthenticated and non-siteAdmin requests", async () => {
+      const app = buildApp();
+      const anon = await app.inject({ method: "GET", url: "/api/admin/users/whoever" });
+      expect(anon.statusCode).toBe(401);
+
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+      const nonAdmin = await app.inject({ method: "GET", url: "/api/admin/users/whoever", headers: { cookie } });
+      expect(nonAdmin.statusCode).toBe(403);
+    });
+
+    it("returns user info with memberships including group names and revoked ones", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const groupA = await makeGroup(cleanups, `A ${crypto.randomUUID()}`);
+      const groupB = await makeGroup(cleanups, `B ${crypto.randomUUID()}`);
+      const email = `profile-${crypto.randomUUID()}@example.com`;
+      const [target] = await db
+        .insert(user)
+        .values({ id: crypto.randomUUID(), email, name: "Profile Person", title: "T1" })
+        .returning({ id: user.id });
+      cleanups.push(async () => {
+        await db.delete(user).where(eq(user.id, target!.id));
+      });
+      await db.insert(groupMemberships).values([
+        { userId: target!.id, groupId: groupA.id, rules: ["view_own_tickets"] },
+        { userId: target!.id, groupId: groupB.id, rules: [], status: "revoked" },
+      ]);
+
+      const response = await app.inject({ method: "GET", url: `/api/admin/users/${target!.id}`, headers: { cookie } });
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body).toMatchObject({
+        id: target!.id,
+        email,
+        name: "Profile Person",
+        title: "T1",
+        emailVerified: false,
+        siteAdmin: false,
+        siteRules: [],
+      });
+      expect(body.memberships).toHaveLength(2);
+      expect(body.memberships).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ groupId: groupA.id, groupName: groupA.name, status: "active", rules: ["view_own_tickets"] }),
+          expect.objectContaining({ groupId: groupB.id, groupName: groupB.name, status: "revoked" }),
+        ]),
+      );
+    });
+
+    it("returns an empty memberships list for a user in no group", async () => {
+      const app = buildApp();
+      const { cookie, userId, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: `/api/admin/users/${userId}`, headers: { cookie } });
+      expect(response.statusCode).toBe(200);
+      expect(response.json().memberships).toEqual([]);
+    });
+
+    it("returns 404 for an unknown user", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: "/api/admin/users/no-such-user", headers: { cookie } });
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe("POST /api/admin/users", () => {
     function trackCreatedEmail(email: string) {
       cleanups.push(async () => {

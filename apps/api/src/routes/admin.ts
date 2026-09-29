@@ -305,6 +305,40 @@ export async function adminRoute(app: FastifyInstance) {
       .orderBy(user.email);
   });
 
+  // One user plus every membership they hold (revoked included, so the
+  // profile can show it as such). See openspec/changes/add-user-profile.
+  app.get<{ Params: { id: string } }>("/api/admin/users/:id", { preHandler: requireSiteAdmin }, async (request, reply) => {
+    const [found] = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        title: user.title,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        siteAdmin: user.siteAdmin,
+        siteRules: user.siteRules,
+      })
+      .from(user)
+      .where(eq(user.id, request.params.id));
+    if (!found) return reply.status(404).send({ error: "user not found" });
+
+    const memberships = await db
+      .select({
+        id: groupMemberships.id,
+        groupId: groupMemberships.groupId,
+        groupName: groups.name,
+        status: groupMemberships.status,
+        tier: groupMemberships.tier,
+        rules: groupMemberships.rules,
+      })
+      .from(groupMemberships)
+      .innerJoin(groups, eq(groupMemberships.groupId, groups.id))
+      .where(eq(groupMemberships.userId, found.id))
+      .orderBy(groups.name);
+
+    return { ...found, memberships };
+  });
+
   // Creates the account directly — no email, no invitation, no password
   // (sign-in stays magic-link only; the person's first link matches this
   // existing row). Goes through better-auth's internal adapter so the id

@@ -20,6 +20,7 @@ import { Link, useParams } from "react-router";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 import { apiFetch } from "../lib/api";
+import { ROLE_LABELS } from "../lib/role-labels";
 
 const LINE = "#1c2a2e";
 const TEXT = "#d7e6e2";
@@ -44,23 +45,6 @@ const DOMAIN_ICONS: Record<string, LucideIcon> = {
   "Reporting & EOD": ClipboardList,
   "Training & knowledge base": GraduationCap,
   "Compliance & safety": ShieldCheck,
-};
-
-const ROLE_LABELS: Record<GroupRoleKey, string> = {
-  site_admin: "Site admin",
-  owner: "Owner",
-  tier1_support: "Tier 1 support",
-  tier2_support: "Tier 2 support",
-  tier3_support: "Tier 3 support",
-  noc_tech: "NOC tech",
-  noc_manager: "NOC manager",
-  field_installer: "Field installer",
-  dispatcher: "Dispatcher",
-  sales_rep: "Sales rep",
-  billing_admin: "Billing admin",
-  warehouse_tech: "Warehouse tech",
-  compliance_officer: "Compliance officer",
-  trainer: "Trainer",
 };
 
 // Applying a role replaces the rule set outright rather than merging —
