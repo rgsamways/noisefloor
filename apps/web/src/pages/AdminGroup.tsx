@@ -29,6 +29,7 @@ const ACCENT = "#3dffc4";
 type Member = { id: string; userId: string; name: string; email: string; tier: string | null; rules: string[]; status: "active" | "revoked" };
 type PendingInvitation = { id: string; email: string; tier: string | null; rules: string[] };
 type MembersResponse = { members: Member[]; pendingInvitations: PendingInvitation[] };
+type AdminUserOption = { id: string; name: string; email: string };
 
 const DOMAIN_ICONS: Record<string, LucideIcon> = {
   "Tier 1 support": Headset,
@@ -199,6 +200,43 @@ export function AdminGroup() {
 
   useEffect(reload, [groupId]);
 
+  const [allUsers, setAllUsers] = useState<AdminUserOption[]>([]);
+  const [addUserId, setAddUserId] = useState("");
+  const [addRules, setAddRules] = useState<GroupRuleKey[]>([]);
+  const [showAddRules, setShowAddRules] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    apiFetch<AdminUserOption[]>("/api/admin/users").then(setAllUsers, () => {});
+  }, []);
+
+  // Everyone except active members — a revoked member is still offered,
+  // since adding them reactivates that membership.
+  const activeMemberIds = new Set((data?.members ?? []).filter((m) => m.status === "active").map((m) => m.userId));
+  const revokedMemberIds = new Set((data?.members ?? []).filter((m) => m.status === "revoked").map((m) => m.userId));
+  const addCandidates = allUsers.filter((u) => !activeMemberIds.has(u.id));
+
+  async function addExistingUser() {
+    if (!groupId || !addUserId) return;
+    setAdding(true);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/groups/${groupId}/memberships`, {
+        method: "POST",
+        body: JSON.stringify({ userId: addUserId, rules: addRules }),
+      });
+      setAddUserId("");
+      setAddRules([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "failed to add user");
+    } finally {
+      // Reload on failure too — a 409 means they're already an active
+      // member, which is the real state this view should show.
+      setAdding(false);
+      reload();
+    }
+  }
+
   async function invite() {
     if (!groupId || !inviteEmail.trim()) return;
     setInviting(true);
@@ -278,6 +316,58 @@ export function AdminGroup() {
         </div>
 
         {error && <p className="text-[12px] text-red-400">{error}</p>}
+
+        <section className="border p-4" style={{ borderColor: LINE, background: "rgba(255,255,255,0.015)" }}>
+          <h2 className="mb-3 text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>
+            Add existing user
+          </h2>
+          <div className="mb-3 flex gap-2">
+            <select
+              value={addUserId}
+              onChange={(e) => setAddUserId(e.target.value)}
+              className="flex-1 border bg-transparent px-3 py-2 text-[13px] outline-none"
+              style={{ borderColor: LINE, color: TEXT }}
+            >
+              <option value="" style={{ background: "#0b1214" }}>
+                {addCandidates.length === 0 ? "Everyone is already a member" : "Select a user…"}
+              </option>
+              {addCandidates.map((u) => (
+                <option key={u.id} value={u.id} style={{ background: "#0b1214" }}>
+                  {u.name ? `${u.name} — ${u.email}` : u.email}
+                  {revokedMemberIds.has(u.id) ? " (revoked)" : ""}
+                </option>
+              ))}
+            </select>
+            <RoleSelect onApply={(role) => setAddRules([...GROUP_ROLE_DEFAULT_RULES[role]])} />
+            <button
+              type="button"
+              onClick={addExistingUser}
+              disabled={adding || !addUserId}
+              className="border px-3 py-2 text-[13px] disabled:opacity-40"
+              style={{ borderColor: ACCENT, color: ACCENT }}
+            >
+              Add
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAddRules((wasShown) => !wasShown)}
+            className="text-[12px]"
+            style={{ color: MUTED }}
+          >
+            {showAddRules ? "Hide rules" : "Customize rules"} ({addRules.length})
+          </button>
+          {showAddRules && (
+            <div className="mt-3">
+              <RuleChecklist
+                selected={addRules}
+                onToggle={(rule, checked) =>
+                  setAddRules((prev) => (checked ? [...prev, rule] : prev.filter((r) => r !== rule)))
+                }
+              />
+            </div>
+          )}
+        </section>
 
         <section className="border p-4" style={{ borderColor: LINE, background: "rgba(255,255,255,0.015)" }}>
           <h2 className="mb-3 text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>

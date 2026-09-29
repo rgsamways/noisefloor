@@ -30,6 +30,10 @@ const InviteBody = z.object({
   tier: z.string().nullable().optional(),
   rules: z.array(groupRuleKeySchema).optional(),
 });
+const AddMemberBody = z.object({
+  userId: z.string().min(1),
+  rules: z.array(groupRuleKeySchema).optional(),
+});
 const UpdateMembershipBody = z.object({
   tier: z.string().nullable().optional(),
   rules: z.array(groupRuleKeySchema).optional(),
@@ -181,6 +185,48 @@ export async function adminRoute(app: FastifyInstance) {
         .returning();
       await sendInviteEmail({ email: normalizedEmail, groupName: group.name });
       return reply.status(201).send({ kind: "invitation", ...createdInvitation });
+    },
+  );
+
+  // Adds an existing user directly — no email, no invitation. A revoked
+  // membership is reactivated (with the supplied rules replacing the old
+  // ones) rather than rejected, since the unique (userId, groupId) index
+  // means a second row can't exist. See openspec/changes/add-group-member.
+  app.post<{ Params: { groupId: string } }>(
+    "/api/admin/groups/:groupId/memberships",
+    { preHandler: requireSiteAdmin },
+    async (request, reply) => {
+      const { groupId } = request.params;
+      const parsed = AddMemberBody.safeParse(request.body);
+      if (!parsed.success) return reply.status(400).send({ error: "invalid body" });
+
+      const [group] = await db.select({ id: groups.id }).from(groups).where(eq(groups.id, groupId));
+      if (!group) return reply.status(404).send({ error: "group not found" });
+
+      const [target] = await db.select({ id: user.id }).from(user).where(eq(user.id, parsed.data.userId));
+      if (!target) return reply.status(404).send({ error: "user not found" });
+
+      const rules = parsed.data.rules ?? [];
+      const [existing] = await db
+        .select({ id: groupMemberships.id, status: groupMemberships.status })
+        .from(groupMemberships)
+        .where(and(eq(groupMemberships.userId, target.id), eq(groupMemberships.groupId, groupId)));
+
+      if (existing?.status === "active") {
+        return reply.status(409).send({ error: "this person already has access to this group" });
+      }
+
+      if (existing) {
+        const [reactivated] = await db
+          .update(groupMemberships)
+          .set({ status: "active", rules, updatedAt: new Date() })
+          .where(eq(groupMemberships.id, existing.id))
+          .returning();
+        return reply.status(201).send(reactivated);
+      }
+
+      const [created] = await db.insert(groupMemberships).values({ userId: target.id, groupId, rules }).returning();
+      return reply.status(201).send(created);
     },
   );
 

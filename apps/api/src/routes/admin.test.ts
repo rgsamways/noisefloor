@@ -230,6 +230,142 @@ describe("admin routes", () => {
     });
   });
 
+  describe("POST /api/admin/groups/:groupId/memberships", () => {
+    async function makeTargetUser() {
+      const email = `member-${crypto.randomUUID()}@example.com`;
+      const [created] = await db.insert(user).values({ id: crypto.randomUUID(), email, name: "Target" }).returning({ id: user.id });
+      cleanups.push(async () => {
+        await db.delete(user).where(eq(user.id, created!.id));
+      });
+      return { id: created!.id, email };
+    }
+
+    it("rejects unauthenticated and non-siteAdmin requests", async () => {
+      const app = buildApp();
+      const anon = await app.inject({ method: "POST", url: `/api/admin/groups/${crypto.randomUUID()}/memberships`, payload: {} });
+      expect(anon.statusCode).toBe(401);
+
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+      const nonAdmin = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${crypto.randomUUID()}/memberships`,
+        headers: { cookie },
+        payload: { userId: "x" },
+      });
+      expect(nonAdmin.statusCode).toBe(403);
+    });
+
+    it("adds a non-member with rules and creates no invitation", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const target = await makeTargetUser();
+
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/memberships`,
+        headers: { cookie },
+        payload: { userId: target.id, rules: ["view_own_tickets"] },
+      });
+      expect(response.statusCode).toBe(201);
+
+      const memberships = await db.select().from(groupMemberships).where(eq(groupMemberships.groupId, group.id));
+      expect(memberships).toHaveLength(1);
+      expect(memberships[0]).toMatchObject({ userId: target.id, status: "active", rules: ["view_own_tickets"] });
+      const invitations = await db.select({ id: groupInvitations.id }).from(groupInvitations).where(eq(groupInvitations.groupId, group.id));
+      expect(invitations).toHaveLength(0);
+    });
+
+    it("reactivates a revoked member with replaced rules and no duplicate row", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const target = await makeTargetUser();
+      const [revoked] = await db
+        .insert(groupMemberships)
+        .values({ userId: target.id, groupId: group.id, rules: ["view_own_tickets"], status: "revoked" })
+        .returning();
+
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/memberships`,
+        headers: { cookie },
+        payload: { userId: target.id, rules: ["escalate_ticket"] },
+      });
+      expect(response.statusCode).toBe(201);
+
+      const memberships = await db.select().from(groupMemberships).where(eq(groupMemberships.groupId, group.id));
+      expect(memberships).toHaveLength(1);
+      expect(memberships[0]).toMatchObject({ id: revoked!.id, status: "active", rules: ["escalate_ticket"] });
+    });
+
+    it("returns 409 for an already-active member and leaves them unchanged", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const target = await makeTargetUser();
+      await db.insert(groupMemberships).values({ userId: target.id, groupId: group.id, rules: ["view_own_tickets"] });
+
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/memberships`,
+        headers: { cookie },
+        payload: { userId: target.id, rules: ["escalate_ticket"] },
+      });
+      expect(response.statusCode).toBe(409);
+
+      const [row] = await db.select().from(groupMemberships).where(eq(groupMemberships.groupId, group.id));
+      expect(row?.rules).toEqual(["view_own_tickets"]);
+    });
+
+    it("returns 404 for an unknown group and for an unknown user", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const target = await makeTargetUser();
+
+      const unknownGroup = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${crypto.randomUUID()}/memberships`,
+        headers: { cookie },
+        payload: { userId: target.id },
+      });
+      expect(unknownGroup.statusCode).toBe(404);
+
+      const unknownUser = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/memberships`,
+        headers: { cookie },
+        payload: { userId: "no-such-user" },
+      });
+      expect(unknownUser.statusCode).toBe(404);
+
+      const rows = await db.select({ id: groupMemberships.id }).from(groupMemberships).where(eq(groupMemberships.groupId, group.id));
+      expect(rows).toHaveLength(0);
+    });
+
+    it("rejects an invalid rule key", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const target = await makeTargetUser();
+
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/memberships`,
+        headers: { cookie },
+        payload: { userId: target.id, rules: ["not_a_real_rule"] },
+      });
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
   describe("DELETE /api/admin/groups/:groupId/invitations/:id", () => {
     it("cancels a pending invitation", async () => {
       const app = buildApp();
