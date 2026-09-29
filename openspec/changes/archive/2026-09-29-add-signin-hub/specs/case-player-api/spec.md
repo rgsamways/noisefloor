@@ -1,11 +1,4 @@
-# case-player-api Specification
-
-> **Status: Parked, 2026-09-21.** Built for the case-study product; superseded for phase one by the radio-console pivot (`docs/NOISEFLOOR-CONSOLE-HANDOFF.md`). Documents the implementation as built, not under active development. See `PROJECT-PLAN.md` D16.
-
-## Purpose
-The server-side guarantee that makes "commit before reveal" real rather than cosmetic: a client can't peek ahead at future evidence or rubrics no matter what it does in the browser, because the server never sends them until they're earned.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: The case list exposes only public metadata, to callers holding access_case_scenarios
 `GET /cases` SHALL return each case's `id`, `slug`, `title`, `difficulty`, `estimatedMinutes`, and `tags` — never `world`, `stages`, or `debrief` content. A signed-in, non-siteAdmin caller who does not hold `access_case_scenarios` SHALL be rejected before any case data is returned.
