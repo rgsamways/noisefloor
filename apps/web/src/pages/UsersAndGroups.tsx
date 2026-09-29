@@ -110,6 +110,45 @@ function UsersSection() {
 
   useEffect(reload, []);
 
+  const [groups, setGroups] = useState<GroupSummary[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newGroupId, setNewGroupId] = useState("");
+  const [newTier, setNewTier] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    apiFetch<GroupSummary[]>("/api/admin/groups").then(setGroups, () => {});
+  }, []);
+
+  async function createUser() {
+    if (!newEmail.trim() || !newName.trim()) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await apiFetch("/api/admin/users", {
+        method: "POST",
+        body: JSON.stringify({
+          email: newEmail.trim(),
+          name: newName.trim(),
+          title: newTitle.trim() || null,
+          ...(newGroupId ? { group: { groupId: newGroupId, tier: newTier.trim() || null } } : {}),
+        }),
+      });
+      setNewEmail("");
+      setNewName("");
+      setNewTitle("");
+      setNewGroupId("");
+      setNewTier("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "failed to create user");
+    } finally {
+      setCreating(false);
+      reload();
+    }
+  }
+
   async function toggleSiteAdmin(target: AdminUser) {
     setSavingId(target.id);
     setError(null);
@@ -179,6 +218,67 @@ function UsersSection() {
       <h2 className="mb-3 text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>
         Users
       </h2>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <input
+          type="text"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="Name"
+          className="min-w-[140px] flex-1 border bg-transparent px-3 py-2 text-[13px] outline-none"
+          style={{ borderColor: LINE, color: TEXT }}
+        />
+        <input
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Title (optional)"
+          className="min-w-[120px] flex-1 border bg-transparent px-3 py-2 text-[13px] outline-none"
+          style={{ borderColor: LINE, color: TEXT }}
+        />
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="Email"
+          className="min-w-[200px] flex-1 border bg-transparent px-3 py-2 text-[13px] outline-none"
+          style={{ borderColor: LINE, color: TEXT }}
+        />
+        <select
+          value={newGroupId}
+          onChange={(e) => setNewGroupId(e.target.value)}
+          className="border bg-transparent px-3 py-2 text-[13px] outline-none"
+          style={{ borderColor: LINE, color: TEXT }}
+        >
+          <option value="" style={{ background: "#0b1214" }}>
+            No group
+          </option>
+          {groups.map((g) => (
+            <option key={g.id} value={g.id} style={{ background: "#0b1214" }}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+        {newGroupId && (
+          <input
+            type="text"
+            value={newTier}
+            onChange={(e) => setNewTier(e.target.value)}
+            placeholder="Tier (optional)"
+            className="w-[120px] border bg-transparent px-3 py-2 text-[13px] outline-none"
+            style={{ borderColor: LINE, color: TEXT }}
+          />
+        )}
+        <button
+          type="button"
+          onClick={createUser}
+          disabled={creating || !newEmail.trim() || !newName.trim()}
+          className="border px-3 py-2 text-[13px] disabled:opacity-40"
+          style={{ borderColor: ACCENT, color: ACCENT }}
+        >
+          Create user
+        </button>
+      </div>
 
       {error && <p className="mb-3 text-[12px] text-red-400">{error}</p>}
 

@@ -409,6 +409,152 @@ describe("admin routes", () => {
     });
   });
 
+  describe("POST /api/admin/users", () => {
+    function trackCreatedEmail(email: string) {
+      cleanups.push(async () => {
+        await db.delete(user).where(eq(user.email, email));
+      });
+    }
+
+    it("rejects unauthenticated and non-siteAdmin requests", async () => {
+      const app = buildApp();
+      const anon = await app.inject({ method: "POST", url: "/api/admin/users", payload: { email: "a@example.com", name: "A" } });
+      expect(anon.statusCode).toBe(401);
+
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+      const nonAdmin = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email: "a@example.com", name: "A" },
+      });
+      expect(nonAdmin.statusCode).toBe(403);
+    });
+
+    it("rejects an invalid body", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email: "not-an-email", name: "" },
+      });
+      expect(response.statusCode).toBe(400);
+    });
+
+    it("creates an unverified user with no invitation", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const email = `created-${crypto.randomUUID()}@example.com`;
+      trackCreatedEmail(email);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email: email.toUpperCase(), name: "New Person", title: "T1" },
+      });
+      expect(response.statusCode).toBe(201);
+      expect(response.json()).toMatchObject({ email, name: "New Person", title: "T1", siteAdmin: false });
+
+      const [row] = await db.select().from(user).where(eq(user.email, email));
+      expect(row?.emailVerified).toBe(false);
+      expect(row?.title).toBe("T1");
+      const invitations = await db.select({ id: groupInvitations.id }).from(groupInvitations).where(eq(groupInvitations.email, email));
+      expect(invitations).toHaveLength(0);
+    });
+
+    it("returns 409 for an existing email, in any letter case", async () => {
+      const app = buildApp();
+      const { cookie, email, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email: email.toUpperCase(), name: "Dup" },
+      });
+      expect(response.statusCode).toBe(409);
+    });
+
+    it("creates an active membership when an initial group is supplied", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const email = `created-${crypto.randomUUID()}@example.com`;
+      trackCreatedEmail(email);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email, name: "Grouped", group: { groupId: group.id, tier: "T1", rules: [] } },
+      });
+      expect(response.statusCode).toBe(201);
+
+      const memberships = await db.select().from(groupMemberships).where(eq(groupMemberships.groupId, group.id));
+      expect(memberships).toHaveLength(1);
+      expect(memberships[0]).toMatchObject({ userId: response.json().id, tier: "T1", status: "active" });
+    });
+
+    it("creates nothing for an unknown group or an invalid rule", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const email = `created-${crypto.randomUUID()}@example.com`;
+      trackCreatedEmail(email);
+
+      const unknownGroup = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email, name: "X", group: { groupId: crypto.randomUUID() } },
+      });
+      expect(unknownGroup.statusCode).toBe(404);
+
+      const badRule = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email, name: "X", group: { groupId: group.id, rules: ["not-a-real-rule"] } },
+      });
+      expect(badRule.statusCode).toBe(400);
+
+      const rows = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
+      expect(rows).toHaveLength(0);
+    });
+
+    it("lets a created user sign in by magic link into the same account", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const email = `created-${crypto.randomUUID()}@example.com`;
+      trackCreatedEmail(email);
+
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/admin/users",
+        headers: { cookie },
+        payload: { email, name: "Later Signer" },
+      });
+      const createdId = created.json().id;
+
+      await createTestSession(app, email);
+
+      const rows = await db.select({ id: user.id, emailVerified: user.emailVerified }).from(user).where(eq(user.email, email));
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.id).toBe(createdId);
+      expect(rows[0]?.emailVerified).toBe(true);
+    });
+  });
+
   describe("DELETE /api/admin/users/:id", () => {
     it("deletes a user, cascading their sessions and memberships", async () => {
       const app = buildApp();

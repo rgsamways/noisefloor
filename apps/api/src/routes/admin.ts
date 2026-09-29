@@ -2,6 +2,7 @@ import { groupRuleKeySchema } from "@noisefloor/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { auth } from "../auth.js";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { entities, groupInvitations, groupMemberships, groups } from "../db/permissions-schema.js";
@@ -34,6 +35,18 @@ const UpdateMembershipBody = z.object({
   rules: z.array(groupRuleKeySchema).optional(),
 });
 const UpdateSettingsBody = z.object({ eodReportMode: z.enum(["freeform", "structured"]) });
+const CreateUserBody = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  title: z.string().nullable().optional(),
+  group: z
+    .object({
+      groupId: z.string().min(1),
+      tier: z.string().nullable().optional(),
+      rules: z.array(groupRuleKeySchema).optional(),
+    })
+    .optional(),
+});
 const UpdateUserBody = z.object({
   name: z.string().min(1).optional(),
   title: z.string().nullable().optional(),
@@ -244,6 +257,56 @@ export async function adminRoute(app: FastifyInstance) {
       })
       .from(user)
       .orderBy(user.email);
+  });
+
+  // Creates the account directly — no email, no invitation, no password
+  // (sign-in stays magic-link only; the person's first link matches this
+  // existing row). Goes through better-auth's internal adapter so the id
+  // and timestamps match accounts created by first sign-in. See
+  // openspec/changes/add-admin-create-user.
+  app.post("/api/admin/users", { preHandler: requireSiteAdmin }, async (request, reply) => {
+    const parsed = CreateUserBody.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: "invalid body" });
+
+    const normalizedEmail = parsed.data.email.toLowerCase();
+    const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.email, normalizedEmail));
+    if (existing) return reply.status(409).send({ error: "an account with this email already exists" });
+
+    // Validate the group before creating anything, so a bad group can't
+    // leave a user created with no membership.
+    const initialGroup = parsed.data.group;
+    if (initialGroup) {
+      const [group] = await db.select({ id: groups.id }).from(groups).where(eq(groups.id, initialGroup.groupId));
+      if (!group) return reply.status(404).send({ error: "group not found" });
+    }
+
+    const ctx = await auth.$context;
+    const created = await ctx.internalAdapter.createUser(
+      { email: normalizedEmail, name: parsed.data.name, emailVerified: false },
+      { method: "admin" },
+    );
+
+    // title isn't a declared better-auth field, so set it separately.
+    const title = parsed.data.title ?? null;
+    if (title !== null) await db.update(user).set({ title }).where(eq(user.id, created.id));
+
+    if (initialGroup) {
+      await db.insert(groupMemberships).values({
+        userId: created.id,
+        groupId: initialGroup.groupId,
+        tier: initialGroup.tier ?? null,
+        rules: initialGroup.rules ?? [],
+      });
+    }
+
+    return reply.status(201).send({
+      id: created.id,
+      name: parsed.data.name,
+      title,
+      email: normalizedEmail,
+      siteAdmin: false,
+      siteRules: [],
+    });
   });
 
   app.patch<{ Params: { id: string } }>("/api/admin/users/:id", { preHandler: requireSiteAdmin }, async (request, reply) => {
