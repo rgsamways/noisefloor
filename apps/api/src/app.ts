@@ -5,9 +5,12 @@ import { attemptsRoute } from "./routes/attempts.js";
 import { authRoute } from "./routes/auth.js";
 import { casesRoute } from "./routes/cases.js";
 import { contactRoute } from "./routes/contact.js";
+import { customersRoute } from "./routes/customers.js";
 import { eodReportsRoute } from "./routes/eod-reports.js";
+import { genieacsRoute } from "./routes/genieacs.js";
 import { healthRoute } from "./routes/health.js";
 import { sessionRoute } from "./routes/session.js";
+import { uispRoute } from "./routes/uisp.js";
 import { env } from "./env.js";
 
 export function buildApp() {
@@ -25,6 +28,9 @@ export function buildApp() {
   app.register(attemptsRoute);
   app.register(contactRoute);
   app.register(adminRoute);
+  app.register(customersRoute);
+  app.register(genieacsRoute);
+  app.register(uispRoute);
   app.register(sessionRoute);
   app.register(eodReportsRoute);
   return app;

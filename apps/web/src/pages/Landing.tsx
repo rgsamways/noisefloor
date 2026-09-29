@@ -46,7 +46,7 @@ export function Landing() {
             <span>noisefloor</span>
           </div>
           {session ? (
-            <Link to="/me" className="text-[13px]" style={{ color: MUTED }}>
+            <Link to="/hub" className="text-[13px]" style={{ color: MUTED }}>
               Welcome, {session.user.name || session.user.email}
             </Link>
           ) : (
@@ -77,7 +77,7 @@ export function Landing() {
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:gap-5">
               <Link
-                to="/console"
+                to="/sign-in"
                 className="inline-flex items-center gap-2.5 border px-[22px] py-[15px] text-[13px] font-semibold tracking-[0.06em] uppercase"
                 style={{ borderColor: ACCENT, color: ACCENT, background: "rgba(61,255,196,0.08)" }}
               >
@@ -85,7 +85,7 @@ export function Landing() {
                 <ArrowRight size={16} aria-hidden="true" />
               </Link>
               <span className="text-[11px] tracking-[0.06em]" style={{ color: MUTED }}>
-                NO ACCOUNT · SIMULATED LINK
+                SIGN IN · SIMULATED LINK
               </span>
             </div>
           </div>

@@ -169,6 +169,25 @@ describe("admin routes", () => {
       });
     });
 
+    it("rejects an unknown rule key and creates no invitation or membership", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const email = `bad-rule-invite-${crypto.randomUUID()}@example.com`;
+
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/admin/groups/${group.id}/invitations`,
+        headers: { cookie },
+        payload: { email, rules: ["not_a_real_rule"] },
+      });
+      expect(response.statusCode).toBe(400);
+
+      const [invitation] = await db.select().from(groupInvitations).where(eq(groupInvitations.email, email));
+      expect(invitation).toBeUndefined();
+    });
+
     it("rejects inviting an email that already has a membership in this group", async () => {
       const app = buildApp();
       const { cookie, cleanup } = await makeSiteAdmin(app);
@@ -262,19 +281,43 @@ describe("admin routes", () => {
       cleanups.push(memberCleanup);
       const [membership] = await db
         .insert(groupMemberships)
-        .values({ userId: memberUserId, groupId: group.id, tier: "t2", rules: ["view_stuff"] })
+        .values({ userId: memberUserId, groupId: group.id, tier: "t2", rules: ["view_own_tickets"] })
         .returning();
 
       const response = await app.inject({
         method: "PATCH",
         url: `/api/admin/groups/${group.id}/memberships/${membership!.id}`,
         headers: { cookie },
-        payload: { rules: ["view_stuff", "edit_stuff"] },
+        payload: { rules: ["view_own_tickets", "escalate_ticket"] },
       });
       expect(response.statusCode).toBe(200);
       const body = response.json() as { tier: string; rules: string[] };
       expect(body.tier).toBe("t2");
-      expect(body.rules).toEqual(["view_stuff", "edit_stuff"]);
+      expect(body.rules).toEqual(["view_own_tickets", "escalate_ticket"]);
+    });
+
+    it("rejects an unknown rule key and leaves the existing rules unchanged", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+      const group = await makeGroup(cleanups);
+      const { userId: memberUserId, cleanup: memberCleanup } = await makeSiteAdmin(app);
+      cleanups.push(memberCleanup);
+      const [membership] = await db
+        .insert(groupMemberships)
+        .values({ userId: memberUserId, groupId: group.id, rules: ["view_own_tickets"] })
+        .returning();
+
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/api/admin/groups/${group.id}/memberships/${membership!.id}`,
+        headers: { cookie },
+        payload: { rules: ["not_a_real_rule"] },
+      });
+      expect(response.statusCode).toBe(400);
+
+      const [reloaded] = await db.select().from(groupMemberships).where(eq(groupMemberships.id, membership!.id));
+      expect(reloaded?.rules).toEqual(["view_own_tickets"]);
     });
   });
 

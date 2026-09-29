@@ -86,7 +86,7 @@ export function AdminUserReports() {
     <HudPageShell>
       <div className="relative mx-auto flex max-w-[960px] flex-col gap-6">
         <div>
-          <Link to="/admin" className="text-[11px] tracking-[0.06em] uppercase" style={{ color: MUTED }}>
+          <Link to="/admin/users-and-groups" className="text-[11px] tracking-[0.06em] uppercase" style={{ color: MUTED }}>
             Admin
           </Link>
           <h1 className="mt-3 text-[28px] font-semibold tracking-tight">

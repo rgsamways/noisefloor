@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { HudDatePicker } from "../components/HudDatePicker";
 import { HudFloorNav } from "../components/HudFloorNav";
 import { HudPageShell } from "../components/HudPageShell";
 import { apiFetch } from "../lib/api";
-import { authClient } from "../lib/auth-client";
 
 const LINE = "#1c2a2e";
 const TEXT = "#d7e6e2";
@@ -186,8 +186,7 @@ function updateRow<T>(setRows: React.Dispatch<React.SetStateAction<T[]>>, index:
   setRows((prev) => prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
 }
 
-export function Me() {
-  const { data: session } = authClient.useSession();
+export function Reports() {
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
   const [date, setDate] = useState(todayLocal());
@@ -270,21 +269,11 @@ export function Me() {
   return (
     <HudPageShell>
       <div className="relative mx-auto flex max-w-[960px] flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[11px] tracking-[0.06em] uppercase" style={{ color: MUTED }}>
-              Account
-            </div>
-            <h1 className="mt-3 text-[28px] font-semibold tracking-tight">Signed in as {session?.user.email}</h1>
-          </div>
-          <button
-            type="button"
-            onClick={() => authClient.signOut()}
-            className="border px-3 py-2 text-[13px]"
-            style={{ borderColor: LINE, color: MUTED }}
-          >
-            Sign out
-          </button>
+        <div>
+          <Link to="/hub" className="block text-[11px] tracking-[0.06em] uppercase" style={{ color: MUTED }}>
+            Support
+          </Link>
+          <h1 className="mt-3 text-[32px] font-semibold tracking-tight">Reports</h1>
         </div>
 
         <section className="border p-4" style={{ borderColor: LINE, background: "rgba(255,255,255,0.015)" }}>
@@ -464,16 +453,6 @@ export function Me() {
               </div>
             </div>
           )}
-        </section>
-
-        <section className="border p-4" style={{ borderColor: LINE, background: "rgba(255,255,255,0.015)" }}>
-          <h2 className="mb-3 text-[11px] tracking-[0.1em] uppercase" style={{ color: ACCENT }}>
-            Tickets
-          </h2>
-          <p className="text-[13px] leading-relaxed" style={{ color: BODY }}>
-            Ticket history will live here once noisefloor can connect to real customer radios. For now, mention any tickets you worked
-            on in the "Tickets worked on" {mode === "freeform" ? "field" : "table"} above.
-          </p>
         </section>
       </div>
       <HudFloorNav />

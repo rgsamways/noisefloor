@@ -4,7 +4,21 @@ import { buildApp } from "../app.js";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { createTestSession } from "../test-utils/auth.js";
-import { applyBootstrapSiteAdmin } from "./bootstrap-site-admin.js";
+import { applyBootstrapSiteAdmin, isBootstrapSiteAdminEmail } from "./bootstrap-site-admin.js";
+
+describe("isBootstrapSiteAdminEmail", () => {
+  it("matches the given bootstrap email", () => {
+    expect(isBootstrapSiteAdminEmail("someone@example.com", "someone@example.com")).toBe(true);
+  });
+
+  it("matches case-insensitively", () => {
+    expect(isBootstrapSiteAdminEmail("Someone@Example.com", "someone@example.com")).toBe(true);
+  });
+
+  it("does not match a different email", () => {
+    expect(isBootstrapSiteAdminEmail("someone@example.com", "someone-else@example.com")).toBe(false);
+  });
+});
 
 describe("applyBootstrapSiteAdmin", () => {
   it("sets siteAdmin true for a fresh account matching the bootstrap email", async () => {

@@ -4,7 +4,8 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import { eodReports } from "../db/schema.js";
 import { getEodReportMode } from "../lib/eod-report-mode.js";
-import { requireSession } from "../lib/get-session.js";
+import { getSession, requireSession } from "../lib/get-session.js";
+import { requireGroupRule } from "../lib/group-authorization.js";
 
 const TicketRowSchema = z.object({ ticketNumber: z.string(), customer: z.string(), summary: z.string(), status: z.string() });
 const DeviceRowSchema = z.object({ deviceType: z.string(), serialId: z.string(), notes: z.string() });
@@ -55,9 +56,8 @@ export async function eodReportsRoute(app: FastifyInstance) {
     return { mode: await getEodReportMode() };
   });
 
-  app.get("/api/eod-reports", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.get("/api/eod-reports", { preHandler: requireGroupRule("view_own_eod_reports") }, async (request) => {
+    const session = (await getSession(request))!;
 
     return db
       .select(REPORT_COLUMNS)
@@ -66,17 +66,20 @@ export async function eodReportsRoute(app: FastifyInstance) {
       .orderBy(desc(eodReports.reportDate));
   });
 
-  app.get<{ Params: { date: string } }>("/api/eod-reports/:date", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.get<{ Params: { date: string } }>(
+    "/api/eod-reports/:date",
+    { preHandler: requireGroupRule("view_own_eod_reports") },
+    async (request, reply) => {
+      const session = (await getSession(request))!;
 
-    const [found] = await db
-      .select(REPORT_COLUMNS)
-      .from(eodReports)
-      .where(and(eq(eodReports.userId, session.user.id), eq(eodReports.reportDate, request.params.date)));
-    if (!found) return reply.status(404).send({ error: "no report filed for this date" });
-    return found;
-  });
+      const [found] = await db
+        .select(REPORT_COLUMNS)
+        .from(eodReports)
+        .where(and(eq(eodReports.userId, session.user.id), eq(eodReports.reportDate, request.params.date)));
+      if (!found) return reply.status(404).send({ error: "no report filed for this date" });
+      return found;
+    },
+  );
 
   // A report's mode is decided once, at the moment it's first saved, and
   // never changes on later edits — this route always saves in *the
@@ -84,25 +87,39 @@ export async function eodReportsRoute(app: FastifyInstance) {
   // to the site's current mode only when creating a brand-new report
   // (design.md's Decision 2). A body shaped for the wrong mode is
   // rejected, not silently reinterpreted.
-  app.put<{ Params: { date: string } }>("/api/eod-reports/:date", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.put<{ Params: { date: string } }>(
+    "/api/eod-reports/:date",
+    { preHandler: requireGroupRule("submit_eod_report") },
+    async (request, reply) => {
+      const session = (await getSession(request))!;
 
-    const [existing] = await db
-      .select({ id: eodReports.id, mode: eodReports.mode })
-      .from(eodReports)
-      .where(and(eq(eodReports.userId, session.user.id), eq(eodReports.reportDate, request.params.date)));
+      const [existing] = await db
+        .select({ id: eodReports.id, mode: eodReports.mode })
+        .from(eodReports)
+        .where(and(eq(eodReports.userId, session.user.id), eq(eodReports.reportDate, request.params.date)));
 
-    const mode = existing?.mode ?? (await getEodReportMode());
+      const mode = existing?.mode ?? (await getEodReportMode());
 
-    // Two full branches, not one generically-typed `fields` object — the
-    // freeform and structured shapes genuinely differ, and Drizzle's
-    // insert/update types want to know exactly which columns a given
-    // call sets, not a loosely-typed superset of both.
-    if (mode === "freeform") {
-      const parsed = FreeformReportBody.safeParse(request.body);
-      if (!parsed.success) return reply.status(400).send({ error: "invalid body for freeform mode" });
-      const fields = { ...parsed.data, userEmail: session.user.email, mode: "freeform" as const, updatedAt: new Date() };
+      // Two full branches, not one generically-typed `fields` object — the
+      // freeform and structured shapes genuinely differ, and Drizzle's
+      // insert/update types want to know exactly which columns a given
+      // call sets, not a loosely-typed superset of both.
+      if (mode === "freeform") {
+        const parsed = FreeformReportBody.safeParse(request.body);
+        if (!parsed.success) return reply.status(400).send({ error: "invalid body for freeform mode" });
+        const fields = { ...parsed.data, userEmail: session.user.email, mode: "freeform" as const, updatedAt: new Date() };
+        const [saved] = existing
+          ? await db.update(eodReports).set(fields).where(eq(eodReports.id, existing.id)).returning(REPORT_COLUMNS)
+          : await db
+              .insert(eodReports)
+              .values({ ...fields, userId: session.user.id, reportDate: request.params.date })
+              .returning(REPORT_COLUMNS);
+        return saved;
+      }
+
+      const parsed = StructuredReportBody.safeParse(request.body);
+      if (!parsed.success) return reply.status(400).send({ error: "invalid body for structured mode" });
+      const fields = { ...parsed.data, userEmail: session.user.email, mode: "structured" as const, updatedAt: new Date() };
       const [saved] = existing
         ? await db.update(eodReports).set(fields).where(eq(eodReports.id, existing.id)).returning(REPORT_COLUMNS)
         : await db
@@ -110,17 +127,6 @@ export async function eodReportsRoute(app: FastifyInstance) {
             .values({ ...fields, userId: session.user.id, reportDate: request.params.date })
             .returning(REPORT_COLUMNS);
       return saved;
-    }
-
-    const parsed = StructuredReportBody.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ error: "invalid body for structured mode" });
-    const fields = { ...parsed.data, userEmail: session.user.email, mode: "structured" as const, updatedAt: new Date() };
-    const [saved] = existing
-      ? await db.update(eodReports).set(fields).where(eq(eodReports.id, existing.id)).returning(REPORT_COLUMNS)
-      : await db
-          .insert(eodReports)
-          .values({ ...fields, userId: session.user.id, reportDate: request.params.date })
-          .returning(REPORT_COLUMNS);
-    return saved;
-  });
+    },
+  );
 }

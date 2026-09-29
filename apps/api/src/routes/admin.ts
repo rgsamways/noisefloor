@@ -1,3 +1,4 @@
+import { groupRuleKeySchema } from "@noisefloor/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -5,6 +6,7 @@ import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
 import { entities, groupInvitations, groupMemberships, groups } from "../db/permissions-schema.js";
 import { eodReports } from "../db/schema.js";
+import { isBootstrapSiteAdminEmail } from "../lib/bootstrap-site-admin.js";
 import { getEodReportMode, setEodReportMode } from "../lib/eod-report-mode.js";
 import { getSession } from "../lib/get-session.js";
 import { sendInviteEmail } from "../lib/send-invite-email.js";
@@ -25,11 +27,11 @@ const CreateGroupBody = z.object({ name: z.string().min(1) });
 const InviteBody = z.object({
   email: z.string().email(),
   tier: z.string().nullable().optional(),
-  rules: z.array(z.string()).optional(),
+  rules: z.array(groupRuleKeySchema).optional(),
 });
 const UpdateMembershipBody = z.object({
   tier: z.string().nullable().optional(),
-  rules: z.array(z.string()).optional(),
+  rules: z.array(groupRuleKeySchema).optional(),
 });
 const UpdateSettingsBody = z.object({ eodReportMode: z.enum(["freeform", "structured"]) });
 const UpdateUserBody = z.object({
@@ -248,11 +250,20 @@ export async function adminRoute(app: FastifyInstance) {
     const parsed = UpdateUserBody.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: "invalid body" });
 
-    const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.id, request.params.id));
+    const [existing] = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, request.params.id));
     if (!existing) return reply.status(404).send({ error: "user not found" });
 
-    if (parsed.data.siteAdmin === false && (await wouldRemoveLastSiteAdmin(request.params.id))) {
-      return reply.status(409).send({ error: "cannot remove the last siteAdmin" });
+    if (parsed.data.siteAdmin === false) {
+      // The bootstrap siteAdmin account keeps siteAdmin permanently,
+      // regardless of how many other site admins exist — stronger than
+      // wouldRemoveLastSiteAdmin below, which only blocks removing the
+      // *last* one. Mirrors the delete route's own protection.
+      if (isBootstrapSiteAdminEmail(existing.email)) {
+        return reply.status(409).send({ error: "cannot remove siteAdmin from the bootstrap site admin account" });
+      }
+      if (await wouldRemoveLastSiteAdmin(request.params.id)) {
+        return reply.status(409).send({ error: "cannot remove the last siteAdmin" });
+      }
     }
 
     const update: { name?: string; title?: string | null; siteAdmin?: boolean; siteRules?: string[] } = {};
@@ -287,8 +298,15 @@ export async function adminRoute(app: FastifyInstance) {
       return reply.status(409).send({ error: "cannot delete your own account" });
     }
 
-    const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.id, request.params.id));
+    const [existing] = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, request.params.id));
     if (!existing) return reply.status(404).send({ error: "user not found" });
+    // The bootstrap siteAdmin account is never deletable, by anyone —
+    // not just self-delete protection. There's exactly one of these,
+    // ever (bootstrap-site-admin.ts's own comment); losing it has no
+    // recovery path short of a manual DB edit.
+    if (isBootstrapSiteAdminEmail(existing.email)) {
+      return reply.status(409).send({ error: "cannot delete the bootstrap site admin account" });
+    }
 
     await db.delete(user).where(eq(user.id, request.params.id));
     return reply.status(204).send();

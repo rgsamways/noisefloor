@@ -12,6 +12,20 @@ import { db } from "../db/client.js";
 export const BOOTSTRAP_SITE_ADMIN_EMAIL = "rgsamways@gmail.com";
 
 /**
+ * The bootstrap account is the one "god user" — never deletable, never
+ * strippable of siteAdmin, by anyone, regardless of how many other site
+ * admins exist. Extracted as a pure function (rather than inlining the
+ * comparison at each call site) specifically so it's unit-testable with
+ * an injected fake email — never write an automated test that exercises
+ * the real BOOTSTRAP_SITE_ADMIN_EMAIL against a live database row; if a
+ * bug ever let that comparison return the wrong answer, such a test
+ * would be the very thing that deletes or de-admins the real account.
+ */
+export function isBootstrapSiteAdminEmail(email: string, bootstrapEmail: string = BOOTSTRAP_SITE_ADMIN_EMAIL): boolean {
+  return email.toLowerCase() === bootstrapEmail.toLowerCase();
+}
+
+/**
  * Idempotent and self-healing: called on every session resolution
  * (get-session.ts), so it applies correctly whether the bootstrap
  * account existed before this capability was deployed or gets created

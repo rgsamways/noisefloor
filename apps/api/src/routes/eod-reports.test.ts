@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/client.js";
-import { entities } from "../db/permissions-schema.js";
+import { entities, groupMemberships, groups } from "../db/permissions-schema.js";
 import { eodReports } from "../db/schema.js";
 import { createTestSession } from "../test-utils/auth.js";
 
@@ -14,6 +14,29 @@ async function makeSiteAdmin(app: ReturnType<typeof buildApp>) {
   return { cookie, email, userId: testUser!.id, cleanup };
 }
 
+// Most tests here need a caller holding submit_eod_report/view_own_eod_reports
+// via a real active membership, now that those routes are rule-gated
+// (add-signin-hub) rather than just requireSession. Attaches the new group
+// to the *existing* seeded entity rather than inserting a new one —
+// getEodReportMode/setEodReportMode both assume exactly one entity row
+// exists (plain `.limit(1)`, no filter), so a second entity row present
+// mid-test (as a fresh `makeGroup`-style insert would create) makes which
+// one they resolve to nondeterministic.
+async function makeEodReportUser(app: ReturnType<typeof buildApp>, cleanups: Array<() => Promise<void>>, rules: string[]) {
+  const { cookie, email, cleanup } = await createTestSession(app);
+  cleanups.push(cleanup);
+  const [testUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
+  const [entity] = await db.select({ id: entities.id }).from(entities).limit(1);
+  const [group] = await db.insert(groups).values({ entityId: entity!.id, name: `Test Group ${crypto.randomUUID()}` }).returning();
+  await db.insert(groupMemberships).values({ userId: testUser!.id, groupId: group!.id, rules });
+  cleanups.push(async () => {
+    await db.delete(groups).where(eq(groups.id, group!.id));
+  });
+  return { cookie, email, userId: testUser!.id };
+}
+
+const EOD_RULES = ["submit_eod_report", "view_own_eod_reports"];
+
 const REPORT = { tickets: "t1", devicesRefurbished: "d1", packages: "p1", calls: "c1", other: "o1" };
 const STRUCTURED_REPORT = {
   ticketRows: [{ ticketNumber: "T-1", customer: "Jane", summary: "radio swap", status: "Resolved" }],
@@ -23,9 +46,6 @@ const STRUCTURED_REPORT = {
   other: "o1",
 };
 
-// Every test that flips the site-wide mode must restore it afterward —
-// this row is shared across every test file hitting the same local dev
-// database, not isolated per test.
 async function withEodReportMode(mode: "freeform" | "structured", cleanups: Array<() => Promise<void>>) {
   const [entity] = await db.select({ id: entities.id, eodReportMode: entities.eodReportMode }).from(entities).limit(1);
   await db.update(entities).set({ eodReportMode: mode }).where(eq(entities.id, entity!.id));
@@ -44,8 +64,7 @@ describe("eod-reports routes", () => {
   describe("PUT /api/eod-reports/:date", () => {
     it("creates a report for a new date", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       const response = await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       expect(response.statusCode).toBe(200);
@@ -56,8 +75,7 @@ describe("eod-reports routes", () => {
 
     it("replaces an already-filed date's content instead of creating a second row", async () => {
       const app = buildApp();
-      const { cookie, email, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie, email } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       const response = await app.inject({
@@ -77,12 +95,29 @@ describe("eod-reports routes", () => {
 
     it("snapshots the caller's email at write time", async () => {
       const app = buildApp();
-      const { cookie, email, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie, email } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       const [row] = await db.select().from(eodReports).where(eq(eodReports.userEmail, email));
       expect(row?.userEmail).toBe(email);
+    });
+
+    it("rejects a caller without submit_eod_report", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("lets a siteAdmin file a report without holding submit_eod_report", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
+      expect(response.statusCode).toBe(200);
     });
   });
 
@@ -151,8 +186,7 @@ describe("eod-reports routes", () => {
   describe("structured mode", () => {
     it("saves a structured report when the site's mode is structured", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
       await withEodReportMode("structured", cleanups);
 
       const response = await app.inject({
@@ -169,8 +203,7 @@ describe("eod-reports routes", () => {
 
     it("keeps an already-filed freeform report freeform even after the site switches to structured", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       await withEodReportMode("structured", cleanups);
@@ -189,8 +222,7 @@ describe("eod-reports routes", () => {
 
     it("rejects a structured body for a freeform-mode save", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       const response = await app.inject({
         method: "PUT",
@@ -203,8 +235,7 @@ describe("eod-reports routes", () => {
 
     it("rejects a freeform body for a structured-mode save", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
       await withEodReportMode("structured", cleanups);
 
       const response = await app.inject({
@@ -220,8 +251,7 @@ describe("eod-reports routes", () => {
   describe("GET /api/eod-reports/:date", () => {
     it("returns 404 for a date with no filed report", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       const response = await app.inject({ method: "GET", url: "/api/eod-reports/2026-01-01", headers: { cookie } });
       expect(response.statusCode).toBe(404);
@@ -229,23 +259,29 @@ describe("eod-reports routes", () => {
 
     it("returns the filed report for a date", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       const response = await app.inject({ method: "GET", url: "/api/eod-reports/2026-09-25", headers: { cookie } });
       expect(response.statusCode).toBe(200);
       expect((response.json() as { tickets: string }).tickets).toBe("t1");
     });
+
+    it("rejects a caller without view_own_eod_reports", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: "/api/eod-reports/2026-09-25", headers: { cookie } });
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe("GET /api/eod-reports", () => {
     it("only returns the caller's own reports", async () => {
       const app = buildApp();
-      const { cookie, cleanup } = await createTestSession(app);
-      cleanups.push(cleanup);
-      const { cookie: otherCookie, cleanup: otherCleanup } = await createTestSession(app);
-      cleanups.push(otherCleanup);
+      const { cookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
+      const { cookie: otherCookie } = await makeEodReportUser(app, cleanups, EOD_RULES);
 
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-25", headers: { cookie }, payload: REPORT });
       await app.inject({ method: "PUT", url: "/api/eod-reports/2026-09-24", headers: { cookie: otherCookie }, payload: REPORT });
@@ -255,6 +291,24 @@ describe("eod-reports routes", () => {
       const body = response.json() as Array<{ reportDate: string }>;
       expect(body).toHaveLength(1);
       expect(body[0]?.reportDate).toBe("2026-09-25");
+    });
+
+    it("rejects a caller without view_own_eod_reports", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await createTestSession(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: "/api/eod-reports", headers: { cookie } });
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("lets a siteAdmin list reports without holding view_own_eod_reports", async () => {
+      const app = buildApp();
+      const { cookie, cleanup } = await makeSiteAdmin(app);
+      cleanups.push(cleanup);
+
+      const response = await app.inject({ method: "GET", url: "/api/eod-reports", headers: { cookie } });
+      expect(response.statusCode).toBe(200);
     });
   });
 

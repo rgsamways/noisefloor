@@ -1,6 +1,35 @@
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
+import { user } from "../db/auth-schema.js";
+import { db } from "../db/client.js";
+import { entities, groupMemberships, groups } from "../db/permissions-schema.js";
 import { createTestSession } from "../test-utils/auth.js";
+
+// Reuses the existing seeded entity — see eod-reports.test.ts's
+// makeEodReportUser for why (a helper elsewhere assumes exactly one
+// entity row exists; kept consistent here too).
+async function grantAccessCaseScenarios(email: string) {
+  const [testUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
+  const [entity] = await db.select({ id: entities.id }).from(entities).limit(1);
+  const [group] = await db.insert(groups).values({ entityId: entity!.id, name: `Test Group ${crypto.randomUUID()}` }).returning();
+  await db.insert(groupMemberships).values({ userId: testUser!.id, groupId: group!.id, rules: ["access_case_scenarios"] });
+  return async () => {
+    await db.delete(groups).where(eq(groups.id, group!.id));
+  };
+}
+
+async function makeAttemptsCaller(app: ReturnType<typeof buildApp>) {
+  const { cookie, email, cleanup } = await createTestSession(app);
+  const groupCleanup = await grantAccessCaseScenarios(email);
+  return {
+    cookie,
+    cleanup: async () => {
+      await groupCleanup();
+      await cleanup();
+    },
+  };
+}
 
 async function startAttempt(app: ReturnType<typeof buildApp>, cookie: string) {
   const response = await app.inject({
@@ -15,11 +44,36 @@ async function startAttempt(app: ReturnType<typeof buildApp>, cookie: string) {
 describe("POST /attempts", () => {
   it("records the case's current version at creation", async () => {
     const app = buildApp();
-    const { cookie, cleanup } = await createTestSession(app);
+    const { cookie, cleanup } = await makeAttemptsCaller(app);
     try {
       const attempt = await startAttempt(app, cookie);
       expect(attempt.caseId).toBe("case-001");
       expect(attempt.caseVersion).toBe(1);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("403s a caller without access_case_scenarios", async () => {
+    const app = buildApp();
+    const { cookie, cleanup } = await createTestSession(app);
+    try {
+      const response = await app.inject({ method: "POST", url: "/attempts", headers: { cookie }, payload: { caseSlug: "wet-leaves" } });
+      expect(response.statusCode).toBe(403);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("lets a siteAdmin start an attempt without holding access_case_scenarios", async () => {
+    const app = buildApp();
+    const { cookie, email, cleanup } = await createTestSession(app);
+    try {
+      const [testUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
+      await db.update(user).set({ siteAdmin: true }).where(eq(user.id, testUser!.id));
+
+      const response = await app.inject({ method: "POST", url: "/attempts", headers: { cookie }, payload: { caseSlug: "wet-leaves" } });
+      expect(response.statusCode).toBe(200);
     } finally {
       await cleanup();
     }
@@ -29,7 +83,7 @@ describe("POST /attempts", () => {
 describe("POST /attempts/:id/commit", () => {
   it("returns a score, feedback, and the next stage id for a non-final commit", async () => {
     const app = buildApp();
-    const { cookie, cleanup } = await createTestSession(app);
+    const { cookie, cleanup } = await makeAttemptsCaller(app);
     try {
       const attempt = await startAttempt(app, cookie);
       const response = await app.inject({
@@ -50,7 +104,7 @@ describe("POST /attempts/:id/commit", () => {
 
   it("unlocks the debrief instead of a next stage on the final commit, with the revision bonus applied", async () => {
     const app = buildApp();
-    const { cookie, cleanup } = await createTestSession(app);
+    const { cookie, cleanup } = await makeAttemptsCaller(app);
     try {
       const attempt = await startAttempt(app, cookie);
       await app.inject({
@@ -136,7 +190,7 @@ describe("POST /attempts/:id/commit", () => {
 
   it("rejects a second commit for a stage that's already committed", async () => {
     const app = buildApp();
-    const { cookie, cleanup } = await createTestSession(app);
+    const { cookie, cleanup } = await makeAttemptsCaller(app);
     try {
       const attempt = await startAttempt(app, cookie);
       await app.inject({
@@ -156,12 +210,28 @@ describe("POST /attempts/:id/commit", () => {
       await cleanup();
     }
   });
+
+  it("403s a caller without access_case_scenarios", async () => {
+    const app = buildApp();
+    const { cookie, cleanup } = await createTestSession(app);
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/attempts/some-nonexistent-id/commit",
+        headers: { cookie },
+        payload: { stageId: "s1", answer: { optionId: "s1-capacity-capped" } },
+      });
+      expect(response.statusCode).toBe(403);
+    } finally {
+      await cleanup();
+    }
+  });
 });
 
 describe("GET /attempts/:id", () => {
   it("reflects only committed stages", async () => {
     const app = buildApp();
-    const { cookie, cleanup } = await createTestSession(app);
+    const { cookie, cleanup } = await makeAttemptsCaller(app);
     try {
       const attempt = await startAttempt(app, cookie);
       await app.inject({
@@ -175,6 +245,17 @@ describe("GET /attempts/:id", () => {
       const body = response.json();
       expect(body.commits).toHaveLength(1);
       expect(body.commits[0].stageId).toBe("s1");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("403s a caller without access_case_scenarios", async () => {
+    const app = buildApp();
+    const { cookie, cleanup } = await createTestSession(app);
+    try {
+      const response = await app.inject({ method: "GET", url: "/attempts/some-nonexistent-id", headers: { cookie } });
+      expect(response.statusCode).toBe(403);
     } finally {
       await cleanup();
     }

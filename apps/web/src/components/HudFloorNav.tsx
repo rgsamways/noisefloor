@@ -1,9 +1,9 @@
-import { BookOpen, Home, Radio } from "lucide-react";
+import { BookOpen, Home, LayoutGrid } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", Icon: Home, match: (pathname: string) => pathname === "/" },
-  { to: "/console", label: "Console", Icon: Radio, match: (pathname: string) => pathname === "/console" },
+  { to: "/hub", label: "Hub", Icon: LayoutGrid, match: (pathname: string) => pathname === "/hub" },
   { to: "/kb", label: "KB", Icon: BookOpen, match: (pathname: string) => pathname.startsWith("/kb") },
 ] as const;
 

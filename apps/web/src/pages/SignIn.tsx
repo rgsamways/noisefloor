@@ -12,8 +12,10 @@ export function SignIn() {
       email,
       // Must be absolute: Better Auth resolves a relative callbackURL
       // against its own origin (the API), not the web app's — a relative
-      // "/" silently redirects back to the API instead of the web app.
-      callbackURL: `${window.location.origin}/`,
+      // path silently redirects back to the API instead of the web app.
+      // /hub, not "/" — the post-sign-in destination is the rules-driven
+      // hub, not the public Landing page (add-signin-hub).
+      callbackURL: `${window.location.origin}/hub`,
     });
     setStatus(error ? "error" : "sent");
   }

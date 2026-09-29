@@ -11,7 +11,8 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import { attempts, stageCommits } from "../db/schema.js";
 import { findCaseById, findCaseBySlug } from "../lib/case-registry.js";
-import { requireSession } from "../lib/get-session.js";
+import { getSession } from "../lib/get-session.js";
+import { requireGroupRule } from "../lib/group-authorization.js";
 
 const CreateAttemptBody = z.object({ caseSlug: z.string() });
 
@@ -24,9 +25,8 @@ const CommitBody = z.object({ stageId: z.string(), answer: AnswerSchema });
 type StoredAnswer = { optionId: string } | { text: string; matchedBonusPhrases?: string[] };
 
 export async function attemptsRoute(app: FastifyInstance) {
-  app.post("/attempts", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.post("/attempts", { preHandler: requireGroupRule("access_case_scenarios") }, async (request, reply) => {
+    const session = (await getSession(request))!;
 
     const parsed = CreateAttemptBody.safeParse(request.body);
     if (!parsed.success) {
@@ -53,9 +53,11 @@ export async function attemptsRoute(app: FastifyInstance) {
     return { id: created!.id, caseId: created!.caseId, caseVersion: created!.caseVersion, startedAt: created!.startedAt };
   });
 
-  app.post<{ Params: { id: string } }>("/attempts/:id/commit", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.post<{ Params: { id: string } }>(
+    "/attempts/:id/commit",
+    { preHandler: requireGroupRule("access_case_scenarios") },
+    async (request, reply) => {
+    const session = (await getSession(request))!;
 
     const parsed = CommitBody.safeParse(request.body);
     if (!parsed.success) {
@@ -178,11 +180,14 @@ export async function attemptsRoute(app: FastifyInstance) {
     // No separate debrief endpoint yet — it's unlocked at this exact moment,
     // so returning it here avoids adding another gated route for one field.
     return { score, feedback, debriefUnlocked: true, totalScore, debrief: found.debrief };
-  });
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/attempts/:id", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.get<{ Params: { id: string } }>(
+    "/attempts/:id",
+    { preHandler: requireGroupRule("access_case_scenarios") },
+    async (request, reply) => {
+    const session = (await getSession(request))!;
 
     const [attempt] = await db.select().from(attempts).where(eq(attempts.id, request.params.id));
     if (!attempt || attempt.userId !== session.user.id) {
@@ -204,5 +209,6 @@ export async function attemptsRoute(app: FastifyInstance) {
       totalScore: attempt.totalScore,
       commits,
     };
-  });
+    },
+  );
 }

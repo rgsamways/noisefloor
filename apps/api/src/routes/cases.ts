@@ -2,15 +2,12 @@ import { and, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/client.js";
 import { stageCommits } from "../db/schema.js";
+import { requireGroupRule } from "../lib/group-authorization.js";
 import { findCaseBySlug, listCases } from "../lib/case-registry.js";
-import { requireSession } from "../lib/get-session.js";
 
 export async function casesRoute(app: FastifyInstance) {
   // Public metadata only — never world/stages/debrief (case-player-api spec).
-  app.get("/cases", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
-
+  app.get("/cases", { preHandler: requireGroupRule("access_case_scenarios") }, async () => {
     return listCases().map((c) => ({
       id: c.id,
       slug: c.slug,
@@ -28,35 +25,34 @@ export async function casesRoute(app: FastifyInstance) {
   // spoil anything the gating on /stage/:id is meant to protect, since that
   // gating is about which stages/prompts are unlocked, not about hiding
   // the World's numbers from a trainee who's supposed to read them.
-  app.get<{ Params: { slug: string } }>("/cases/:slug", async (request, reply) => {
-    const session = await requireSession(request, reply);
-    if (!session) return;
+  app.get<{ Params: { slug: string } }>(
+    "/cases/:slug",
+    { preHandler: requireGroupRule("access_case_scenarios") },
+    async (request, reply) => {
+      const found = findCaseBySlug(request.params.slug);
+      if (!found) {
+        reply.status(404).send({ error: "case not found" });
+        return;
+      }
 
-    const found = findCaseBySlug(request.params.slug);
-    if (!found) {
-      reply.status(404).send({ error: "case not found" });
-      return;
-    }
-
-    return {
-      id: found.id,
-      slug: found.slug,
-      title: found.title,
-      world: found.world,
-      opening: found.opening,
-      stageIds: found.stages.map((s) => s.id),
-    };
-  });
+      return {
+        id: found.id,
+        slug: found.slug,
+        title: found.title,
+        world: found.world,
+        opening: found.opening,
+        stageIds: found.stages.map((s) => s.id),
+      };
+    },
+  );
 
   // Gated on a commit existing for the immediately preceding stage — the
   // server-side half of "commit before reveal" (case-player-api spec).
   // Reveal/prompt only, never the rubric.
   app.get<{ Params: { slug: string; id: string }; Querystring: { attemptId?: string } }>(
     "/cases/:slug/stage/:id",
+    { preHandler: requireGroupRule("access_case_scenarios") },
     async (request, reply) => {
-      const session = await requireSession(request, reply);
-      if (!session) return;
-
       const found = findCaseBySlug(request.params.slug);
       if (!found) {
         reply.status(404).send({ error: "case not found" });

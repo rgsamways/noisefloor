@@ -11,7 +11,7 @@ const NAV_ITEMS = [
 // component covers both layouts: the laptop/phone mockups share the same
 // items and icons, only spacing, the two side captions, and the
 // grid-vs-flex arrangement differ, all expressible as breakpoint classes.
-// No "Me" item — reaching /me is via the Welcome message link instead.
+// No "Me"/"Hub" item — reaching the signed-in hub is via the Welcome message link instead.
 export function BottomNav() {
   const { pathname } = useLocation();
 

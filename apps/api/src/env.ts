@@ -16,6 +16,15 @@ const envSchema = z.object({
   // (unlike RESEND_FROM_EMAIL's generic default) since it's a real personal
   // inbox, not a placeholder — set in .env locally and in Railway for prod.
   CONTACT_TO_EMAIL: z.string().min(1).optional(),
+  // GenieACS's NBI (REST API) — no built-in auth, so this must stay a
+  // private/local network path (see docs/genieacs-portal-plan.md
+  // prerequisite #3). Local dev/bench trial only for now.
+  GENIEACS_NBI_URL: z.string().min(1).default("http://localhost:7557"),
+  // UISP — no real NRN instance/token exists yet (add-customer-snapshot
+  // design.md's Open Questions), so no safe default for either. The
+  // client stays mock-tested only until both are actually set.
+  UISP_BASE_URL: z.string().min(1).optional(),
+  UISP_API_TOKEN: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse(process.env);
